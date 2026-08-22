@@ -40,7 +40,7 @@ Persist and manage operational incidents with a defined lifecycle and origin con
 | TinyDB access | `services/api/incidents_database.py` |
 | Service layer | `services/api/app/incidents/manager.py` |
 | Manager router | `services/api/app/incidents/manager_router.py` — mount in `app/main.py` |
-| Seed script | `services/api/seed_incidents.py` + `uv run seed-incidents` in `pyproject.toml` |
+| Seed script | `scripts/seed_incidents.py` (run with API venv — see §9) |
 | Backoffice UI | `uis/backoffice/app/(authenticated)/incidents/…` (extend; add manager pages) |
 | BFF routes | `uis/backoffice/app/api/incidents/…` (manager proxies) |
 
@@ -130,12 +130,12 @@ Base path: `/api/incidents`. Register static paths (`/summary`) **before** `/{id
 
 ---
 
-## 9. Seed script — `seed_incidents.py`
+## 9. Seed script — `scripts/seed_incidents.py`
 
 ```bash
-cd services/api && uv run seed-incidents
+cd services/api && uv run python ../../scripts/seed_incidents.py
 # or from repo root:
-uv run --directory services/api seed-incidents
+uv run --directory services/api python ../../scripts/seed_incidents.py
 ```
 
 **Input:** `scripts/incidents.csv` (repo root).
@@ -236,7 +236,7 @@ Global exception handler in FastAPI if not already present for manager routes.
 ## 12. Quality gates
 
 ```bash
-cd services/api && uv run seed-incidents && uv run pytest   # when tests added
+cd services/api && uv run python ../../scripts/seed_incidents.py && uv run pytest   # when tests added
 npm run lint --prefix uis/backoffice && npm run build --prefix uis/backoffice
 ```
 
