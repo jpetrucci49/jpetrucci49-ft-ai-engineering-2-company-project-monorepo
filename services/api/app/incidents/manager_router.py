@@ -28,6 +28,15 @@ from auth.models import UserPublic
 
 router = APIRouter(prefix="/incidents", tags=["incident-manager"])
 
+INCIDENT_NOT_FOUND = "Incident not found."
+
+
+def _parse_incident_id(incident_id: str) -> int:
+    """Parse a path id; raise 404 when it cannot refer to a stored incident."""
+    if not incident_id.isdecimal():
+        raise HTTPException(status_code=404, detail=INCIDENT_NOT_FOUND)
+    return int(incident_id)
+
 
 @router.post("", response_model=IncidentPublic, status_code=status.HTTP_201_CREATED)
 def post_incident(
@@ -62,23 +71,25 @@ def get_incidents_summary(
 
 @router.get("/{incident_id}", response_model=IncidentPublic)
 def get_incident_by_id(
-    incident_id: int,
+    incident_id: str,
     _: Annotated[UserPublic, Depends(get_current_user)],
 ) -> IncidentPublic:
-    incident = get_incident(incident_id)
+    parsed_id = _parse_incident_id(incident_id)
+    incident = get_incident(parsed_id)
     if incident is None:
-        raise HTTPException(status_code=404, detail="Incident not found.")
+        raise HTTPException(status_code=404, detail=INCIDENT_NOT_FOUND)
     return incident
 
 
 @router.patch("/{incident_id}/status", response_model=IncidentPublic)
 def patch_incident_status(
-    incident_id: int,
+    incident_id: str,
     payload: IncidentStatusUpdate,
     _: Annotated[UserPublic, Depends(get_current_user)],
 ) -> IncidentPublic:
+    parsed_id = _parse_incident_id(incident_id)
     try:
-        return update_incident_status(incident_id, payload.status)
+        return update_incident_status(parsed_id, payload.status)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

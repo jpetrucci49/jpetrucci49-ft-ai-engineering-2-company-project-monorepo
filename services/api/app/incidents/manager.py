@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from pydantic import ValidationError
+
 from app.incidents.models import (
     ALL_BRANCHES,
     ALL_CATEGORIES,
@@ -76,10 +78,21 @@ def list_incidents(
 
 
 def get_incident(incident_id: int) -> IncidentPublic | None:
-    document = get_incidents_table().get(doc_id=incident_id)
+    table = get_incidents_table()
+    document = table.get(doc_id=incident_id)
     if document is None:
+        matches = table.search(Query().id == incident_id)
+        if not matches:
+            return None
+        document = matches[0]
+
+    payload = dict(document)
+    payload.setdefault("id", incident_id)
+
+    try:
+        return _to_public(payload)
+    except ValidationError:
         return None
-    return _to_public(document)
 
 
 def create_incident(
