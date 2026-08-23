@@ -349,7 +349,7 @@ export function IncidentListPanel() {
                 <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">Origin</th>
                 <th className="px-4 py-3 font-medium">Branch</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="w-44 px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -376,9 +376,9 @@ export function IncidentListPanel() {
                     <td className="px-4 py-3">{CATEGORY_LABELS[incident.category]}</td>
                     <td className="px-4 py-3">{ORIGIN_LABELS[incident.origin]}</td>
                     <td className="px-4 py-3">{BRANCH_LABELS[incident.branch]}</td>
-                    <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                    <td className="w-44 px-4 py-3" onClick={(event) => event.stopPropagation()}>
                       <select
-                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        className="block w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
                         value={incident.status}
                         onChange={(event) =>
                           void handleStatusChange(incident, event.target.value as IncidentStatus)
