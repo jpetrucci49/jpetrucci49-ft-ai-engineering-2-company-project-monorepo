@@ -8,6 +8,7 @@ import { parseApiError } from "@healthcore/auth";
 import type { AuthMe, ProfileUpdatePayload } from "@healthcore/auth";
 
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export function ProfileForm() {
   const [account, setAccount] = useState<AuthMe | null>(null);
@@ -90,9 +91,11 @@ export function ProfileForm() {
 
   if (error && !account) {
     return (
-      <p className="text-sm text-red-700" role="alert">
-        {error}
-      </p>
+      <ErrorState
+        message={error}
+        onRetry={() => void loadProfile()}
+        homeHref="/"
+      />
     );
   }
 

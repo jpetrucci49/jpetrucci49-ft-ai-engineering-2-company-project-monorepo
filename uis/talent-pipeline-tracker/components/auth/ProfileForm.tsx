@@ -6,6 +6,8 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { authFetch } from "@healthcore/auth";
 import { parseApiError } from "@healthcore/auth";
 import type { AuthMe, ProfileUpdatePayload } from "@healthcore/auth";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Spinner } from "@/components/ui/Spinner";
 
 export function ProfileForm() {
   const [account, setAccount] = useState<AuthMe | null>(null);
@@ -83,18 +85,16 @@ export function ProfileForm() {
   }
 
   if (loading) {
-    return (
-      <p className="text-sm font-medium text-slate-600" role="status">
-        Loading profile…
-      </p>
-    );
+    return <Spinner label="Loading profile…" />;
   }
 
   if (error && !account) {
     return (
-      <p className="text-sm text-red-700" role="alert">
-        {error}
-      </p>
+      <ErrorState
+        message={error}
+        onRetry={() => void loadProfile()}
+        homeHref="/"
+      />
     );
   }
 

@@ -5,6 +5,8 @@ import { patchRecord } from "@/lib/api/records";
 import { statusOptions, stageOptions } from "@/lib/labels";
 import { Alert } from "@/components/ui/Alert";
 import { Field, SelectInput } from "@/components/ui/Field";
+import { ApiError } from "@/types/api";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 import type { RecordOut } from "@/types/record";
 
 interface StatusStageControlsProps {
@@ -28,7 +30,8 @@ export function StatusStageControls({ candidate, onUpdated }: StatusStageControl
       setStage(updated.stage);
       setFeedback({ type: "success", message: "Pipeline updated." });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not update candidate.";
+      const status = error instanceof ApiError ? error.status : undefined;
+      const message = toUserFacingMessage(error, "Could not update candidate.", status);
       setFeedback({ type: "error", message });
     } finally {
       setIsSaving(false);

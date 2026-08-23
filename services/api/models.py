@@ -53,10 +53,10 @@ COUNTRY_CURRENCY = {
 
 def _validate_categories(categories: list[str]) -> list[str]:
     if not categories:
-        raise ValueError("categories must contain at least one item")
+        raise ValueError("Categories must contain at least one item.")
     invalid = [category for category in categories if category not in VALID_CATEGORIES]
     if invalid:
-        raise ValueError(f"invalid categories: {', '.join(invalid)}")
+        raise ValueError(f"Categories has invalid value(s): {', '.join(invalid)}.")
     return categories
 
 
@@ -67,7 +67,7 @@ def _validate_country_currency_pair(
     expected = COUNTRY_CURRENCY[country]
     if currency != expected:
         raise ValueError(
-            f"currency must be {expected.value} for country {country.value}, got {currency.value}"
+            f"Currency must be {expected.value} for country {country.value}, got {currency.value}."
         )
 
 
@@ -89,7 +89,7 @@ class SupplierBase(BaseModel):
         if isinstance(value, str):
             stripped = value.strip()
             if not stripped:
-                raise ValueError("name must not be empty")
+                raise ValueError("Name must not be empty.")
             return stripped
         return value
 

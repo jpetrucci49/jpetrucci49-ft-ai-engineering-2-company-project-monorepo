@@ -214,8 +214,8 @@ def run_seed() -> int:
 def main() -> int:
     try:
         return run_seed()
-    except Exception as exc:
-        print(f"Seeder failed: {exc}", file=sys.stderr)
+    except Exception:
+        print("Seeder failed. Check logs for details.", file=sys.stderr)
         return 1
 
 

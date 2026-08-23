@@ -6,6 +6,8 @@ import { validateNoteContent } from "@/lib/validation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, TextArea } from "@/components/ui/Field";
+import { ApiError } from "@/types/api";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 import type { NoteOut } from "@/types/note";
 
 interface NotesSectionProps {
@@ -42,7 +44,8 @@ export function NotesSection({ recordId, initialNotes }: NotesSectionProps) {
       setSuccessMessage("Note added.");
       await refreshNotes();
     } catch (error) {
-      setMutationError(error instanceof Error ? error.message : "Could not add note.");
+      const status = error instanceof ApiError ? error.status : undefined;
+      setMutationError(toUserFacingMessage(error, "Could not add note.", status));
     } finally {
       setIsSubmitting(false);
     }
@@ -57,7 +60,8 @@ export function NotesSection({ recordId, initialNotes }: NotesSectionProps) {
       setNotes((current) => current.filter((note) => note.id !== noteId));
       setSuccessMessage("Note deleted.");
     } catch (error) {
-      setMutationError(error instanceof Error ? error.message : "Could not delete note.");
+      const status = error instanceof ApiError ? error.status : undefined;
+      setMutationError(toUserFacingMessage(error, "Could not delete note.", status));
     } finally {
       setDeletingId(null);
     }

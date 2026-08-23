@@ -104,16 +104,24 @@ def main() -> int:
 
     csv_path = Path(sys.argv[1])
     if not csv_path.is_file():
-        print(f"Error: file not found or not readable: {csv_path}", file=sys.stderr)
+        print("Error: file not found or not readable.", file=sys.stderr)
         return 1
 
     try:
         df = load_incidents_from_path(csv_path)
-    except OSError as exc:
-        print(f"Error: unable to read file: {exc}", file=sys.stderr)
+    except OSError:
+        print("Error: unable to read file.", file=sys.stderr)
+        return 1
+    except ValueError:
+        print("Error: unable to parse CSV file. Ensure UTF-8 encoding and comma separator.", file=sys.stderr)
         return 1
 
-    metrics = analyze(df)
+    try:
+        metrics = analyze(df)
+    except Exception:
+        print("Error: analysis failed.", file=sys.stderr)
+        return 1
+
     print_report(metrics, csv_path.name)
 
     try:
@@ -122,7 +130,11 @@ def main() -> int:
         answer = "n"
 
     if answer == "y":
-        export_csv(metrics, Path("results.csv"))
+        try:
+            export_csv(metrics, Path("results.csv"))
+        except OSError:
+            print("Error: unable to write results.csv.", file=sys.stderr)
+            return 1
         print("Results exported to results.csv")
 
     return 0

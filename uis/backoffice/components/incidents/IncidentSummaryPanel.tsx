@@ -13,6 +13,7 @@ import {
 } from "@healthcore/incidents/labels";
 
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 type SummaryFilterParam = "status" | "category" | "origin" | "branch";
 
@@ -116,17 +117,21 @@ export function IncidentSummaryPanel() {
 
   if (error) {
     return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-        <p>{error}</p>
-        <button type="button" className="mt-2 underline" onClick={() => setReloadToken((value) => value + 1)}>
-          Retry
-        </button>
-      </div>
+      <ErrorState
+        message={error}
+        onRetry={() => setReloadToken((value) => value + 1)}
+        homeHref="/incidents/manage"
+        homeLabel="View incident list"
+      />
     );
   }
 
   if (!summary) {
-    return null;
+    return (
+      <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        No summary data is available right now.
+      </p>
+    );
   }
 
   return (

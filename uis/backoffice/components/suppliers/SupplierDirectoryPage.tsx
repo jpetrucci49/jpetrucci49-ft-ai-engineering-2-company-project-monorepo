@@ -16,12 +16,12 @@ import {
 } from "@/types/suppliers";
 
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof SuppliersApiError || error instanceof Error) {
-    return error.message;
-  }
-  return fallback;
+  const status = error instanceof SuppliersApiError ? error.status : undefined;
+  return toUserFacingMessage(error, fallback, status);
 }
 
 function readFilters(searchParams: URLSearchParams): SupplierListFilters {
@@ -161,11 +161,13 @@ export function SupplierDirectoryPage() {
 
         {isLoading ? <LoadingState label="Loading suppliers…" /> : null}
 
-        {listError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {listError}
-          </div>
-        )}
+        {listError ? (
+          <ErrorState
+            message={listError}
+            onRetry={() => void reloadSuppliers(filters)}
+            homeHref="/"
+          />
+        ) : null}
 
         {!isLoading && !listError && (
           <SupplierTable

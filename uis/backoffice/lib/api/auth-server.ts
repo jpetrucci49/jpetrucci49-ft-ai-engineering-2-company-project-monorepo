@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { forwardAuthorization, getFastApiOrigin } from "@healthcore/api/proxy";
+import { proxySanitizedResponse, runBffHandler } from "@/lib/api/bff-proxy";
 
 export const AUTH_API_UNAVAILABLE =
   "Unable to reach the authentication API. Ensure it is running (npm run dev:api on port 8000).";
@@ -10,13 +11,7 @@ export function authApiUnavailableResponse(): NextResponse {
 }
 
 export async function proxyAuthResponse(response: Response): Promise<NextResponse> {
-  const body = await response.text();
-  return new NextResponse(body, {
-    status: response.status,
-    headers: {
-      "Content-Type": response.headers.get("Content-Type") ?? "application/json",
-    },
-  });
+  return proxySanitizedResponse(response);
 }
 
 export async function proxyToAuthApi(
@@ -30,4 +25,8 @@ export async function proxyToAuthApi(
     ...init,
     headers,
   });
+}
+
+export function runAuthBffHandler(handler: () => Promise<NextResponse>): Promise<NextResponse> {
+  return runBffHandler(authApiUnavailableResponse, handler);
 }

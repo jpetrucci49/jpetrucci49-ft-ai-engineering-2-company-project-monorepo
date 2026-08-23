@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  incidentsApiUnavailableResponse,
-  proxyToIncidentsApi,
-} from "@/lib/api/incidents-server";
+import { proxyToIncidentsApi, runIncidentsBffHandler } from "@/lib/api/incidents-server";
 
 export async function GET(request: NextRequest) {
-  try {
+  return runIncidentsBffHandler(async () => {
     const response = await proxyToIncidentsApi(request, "/api/incidents/results/export");
     const body = await response.arrayBuffer();
 
@@ -18,7 +15,5 @@ export async function GET(request: NextRequest) {
           response.headers.get("Content-Disposition") ?? 'attachment; filename="results.csv"',
       },
     });
-  } catch {
-    return incidentsApiUnavailableResponse();
-  }
+  });
 }

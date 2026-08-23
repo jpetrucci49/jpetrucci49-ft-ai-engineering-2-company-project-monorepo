@@ -14,6 +14,7 @@ import {
   type SupplierCategory,
   type SupplierStatus,
 } from "@/types/suppliers";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 
 interface SupplierTableProps {
   suppliers: Supplier[];
@@ -172,11 +173,10 @@ export function SupplierTable({
       setEditingRateId(null);
       return true;
     } catch (error) {
+      const status = error instanceof SuppliersApiError ? error.status : undefined;
       setRateError(
         supplier.id,
-        error instanceof SuppliersApiError || error instanceof Error
-          ? error.message
-          : "Unable to update rate."
+        toUserFacingMessage(error, "Unable to update rate.", status)
       );
       return false;
     } finally {
@@ -194,11 +194,10 @@ export function SupplierTable({
       const updated = await updateSupplierStatus(supplier.id, { status: nextStatus });
       onSupplierUpdated(updated);
     } catch (error) {
+      const status = error instanceof SuppliersApiError ? error.status : undefined;
       setActionError(
         supplier.id,
-        error instanceof SuppliersApiError || error instanceof Error
-          ? error.message
-          : "Unable to update status."
+        toUserFacingMessage(error, "Unable to update status.", status)
       );
     } finally {
       setRowBusy(supplier.id, false);

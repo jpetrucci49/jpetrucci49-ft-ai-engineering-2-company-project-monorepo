@@ -11,7 +11,7 @@ export default function GlobalError({
       <body className="min-h-full bg-slate-50 p-8 text-slate-900 antialiased">
         <h2 className="text-xl font-semibold">Something went wrong</h2>
         <p className="mt-2 text-sm text-slate-600">
-          An unexpected error occurred. Please try again or return to the home page.
+          An unexpected error occurred. Please try again or return to the pipeline.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button

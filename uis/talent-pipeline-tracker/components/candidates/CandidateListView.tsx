@@ -7,7 +7,7 @@ import { CandidateFilters, type CandidateFilterValues } from "@/components/candi
 import { CandidateTable } from "@/components/candidates/CandidateTable";
 import { RegisterCandidatePanel } from "@/components/candidates/RegisterCandidatePanel";
 import { useCandidateRecords } from "@/hooks/useCandidateRecords";
-import { Alert } from "@/components/ui/Alert";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Spinner } from "@/components/ui/Spinner";
 
 function readFilters(searchParams: URLSearchParams): CandidateFilterValues {
@@ -84,7 +84,9 @@ export function CandidateListView() {
       <RegisterCandidatePanel onCreated={reload} />
 
       {isPending ? <Spinner label="Loading candidates..." /> : null}
-      {error ? <Alert variant="error">{error}</Alert> : null}
+      {error ? (
+        <ErrorState message={error} onRetry={reload} homeHref="/" />
+      ) : null}
       {response ? (
         <div
           className={`transition-opacity duration-150 ${isRefetching ? "pointer-events-none opacity-60" : "opacity-100"}`}

@@ -1,5 +1,7 @@
 """Tests for POST /auth/forgot-password logic."""
 
+import pytest
+
 from auth.database import get_password_reset_tokens_table
 from auth.services import password_reset as password_reset_service
 from auth.services import users as user_service
@@ -25,10 +27,12 @@ def test_f3_inactive_user_does_not_receive_reset(mock_reset_email, inactive_user
     assert get_password_reset_tokens_table().all() == []
 
 
-def test_f4_email_failure_is_swallowed(mock_reset_email, registered_user):
+def test_f4_email_failure_revokes_token(mock_reset_email, registered_user):
     user, _ = registered_user
     mock_reset_email.side_effect = RuntimeError("resend down")
-    password_reset_service.request_password_reset(user.email)
+    with pytest.raises(password_reset_service.PasswordResetDeliveryError):
+        password_reset_service.request_password_reset(user.email)
+    assert get_password_reset_tokens_table().all() == []
 
 
 def test_f5_new_request_invalidates_previous_unused_token(mock_reset_email, registered_user):

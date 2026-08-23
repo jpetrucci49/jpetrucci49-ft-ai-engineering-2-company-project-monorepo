@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   proxySuppliersResponse,
   proxyToSuppliersApi,
-  suppliersApiUnavailableResponse,
+  runSuppliersBffHandler,
 } from "@/lib/api/suppliers-server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  try {
+  return runSuppliersBffHandler(async () => {
     const { id } = await context.params;
     const response = await proxyToSuppliersApi(request, `/suppliers/${id}`, { method: "DELETE" });
 
@@ -18,7 +18,5 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     return proxySuppliersResponse(response);
-  } catch {
-    return suppliersApiUnavailableResponse();
-  }
+  });
 }

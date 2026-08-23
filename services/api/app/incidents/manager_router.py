@@ -91,6 +91,11 @@ def patch_incident_status(
     try:
         return update_incident_status(parsed_id, payload.status)
     except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(status_code=404, detail=INCIDENT_NOT_FOUND) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        message = str(exc)
+        if message.startswith("Cannot change status"):
+            detail = message
+        else:
+            detail = "Unable to update incident status."
+        raise HTTPException(status_code=400, detail=detail) from exc

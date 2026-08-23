@@ -18,7 +18,12 @@ def register_user(payload: UserRegister) -> UserRegistrationResponse:
     try:
         return user_service.create_user(payload)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+        message = str(exc)
+        if message == "A user with this email already exists.":
+            detail = message
+        else:
+            detail = "Unable to register user."
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail) from exc
 
 
 @router.get("", response_model=list[UserPublic])
@@ -52,12 +57,20 @@ def update_user(
     allow_role_change = current_user.role == UserRole.admin
     try:
         return user_service.update_user(user_id, payload, allow_role_change=allow_role_change)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.") from None
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not allowed to update this user.",
+        ) from None
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+        message = str(exc)
+        if message == "A user with this email already exists.":
+            detail = message
+        else:
+            detail = "Unable to update user."
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail) from exc
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -67,6 +80,6 @@ def delete_user(
 ) -> Response:
     try:
         user_service.delete_user(user_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.") from None
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,13 +1,9 @@
 import { NextRequest } from "next/server";
 
-import {
-  authApiUnavailableResponse,
-  proxyAuthResponse,
-  proxyToAuthApi,
-} from "@/lib/api/auth-server";
+import { proxyAuthResponse, proxyToAuthApi, runAuthBffHandler } from "@/lib/api/auth-server";
 
 export async function POST(request: NextRequest) {
-  try {
+  return runAuthBffHandler(async () => {
     const body = await request.text();
     const response = await proxyToAuthApi(request, "/auth/change-password", {
       method: "POST",
@@ -15,7 +11,5 @@ export async function POST(request: NextRequest) {
       body,
     });
     return proxyAuthResponse(response);
-  } catch {
-    return authApiUnavailableResponse();
-  }
+  });
 }

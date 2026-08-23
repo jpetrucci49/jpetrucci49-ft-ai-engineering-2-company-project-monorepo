@@ -42,9 +42,15 @@ app.add_middleware(
 )
 
 
+from app.core.validation_errors import sanitize_validation_errors
+
+
 @app.exception_handler(RequestValidationError)
 async def request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
-    return JSONResponse(status_code=400, content={"detail": exc.errors()})
+    return JSONResponse(
+        status_code=400,
+        content={"detail": sanitize_validation_errors(exc.errors())},
+    )
 
 
 @app.exception_handler(Exception)

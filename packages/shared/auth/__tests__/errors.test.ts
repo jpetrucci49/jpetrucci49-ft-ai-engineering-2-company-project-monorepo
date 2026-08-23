@@ -1,4 +1,4 @@
-import { parseApiError, parseApiFieldErrors } from "../errors";
+import { humanizeValidationMessage, parseApiError, parseApiFieldErrors } from "../errors";
 
 function mockResponse(
   body: unknown,
@@ -15,6 +15,28 @@ function mockResponse(
       : async () => body,
   } as Response;
 }
+
+describe("humanizeValidationMessage", () => {
+  it("replaces generic String prefix with field label", () => {
+    expect(
+      humanizeValidationMessage({
+        loc: ["body", "title"],
+        msg: "String should have at least 1 character",
+        type: "string_too_short",
+      })
+    ).toBe("Title should have at least 1 character");
+  });
+
+  it("maps missing fields to required message", () => {
+    expect(
+      humanizeValidationMessage({
+        loc: ["body", "description"],
+        msg: "Field required",
+        type: "missing",
+      })
+    ).toBe("Description is required.");
+  });
+});
 
 describe("parseApiError", () => {
   it("returns string detail from JSON body", async () => {
@@ -35,10 +57,16 @@ describe("parseApiError", () => {
 describe("parseApiFieldErrors", () => {
   it("maps validation detail array to field errors", async () => {
     const response = mockResponse({
-      detail: [{ loc: ["body", "email"], msg: "Invalid email", type: "value_error" }],
+      detail: [
+        {
+          loc: ["body", "title"],
+          msg: "String should have at least 1 character",
+          type: "string_too_short",
+        },
+      ],
     });
     await expect(parseApiFieldErrors(response)).resolves.toEqual({
-      email: "Invalid email",
+      title: "Title should have at least 1 character",
     });
   });
 

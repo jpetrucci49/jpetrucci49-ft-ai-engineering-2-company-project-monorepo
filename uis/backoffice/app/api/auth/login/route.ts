@@ -1,13 +1,10 @@
 import { NextRequest } from "next/server";
 
-import {
-  authApiUnavailableResponse,
-  proxyAuthResponse,
-} from "@/lib/api/auth-server";
+import { proxyAuthResponse, proxyToAuthApi, runAuthBffHandler } from "@/lib/api/auth-server";
 import { getFastApiOrigin } from "@healthcore/api/proxy";
 
 export async function POST(request: NextRequest) {
-  try {
+  return runAuthBffHandler(async () => {
     const { email, password } = (await request.json()) as { email: string; password: string };
     const body = new URLSearchParams({
       username: email,
@@ -22,7 +19,5 @@ export async function POST(request: NextRequest) {
     });
 
     return proxyAuthResponse(response);
-  } catch {
-    return authApiUnavailableResponse();
-  }
+  });
 }

@@ -36,5 +36,5 @@ def update_my_profile(
 
     try:
         return profile_service.update_profile(current_user.id, payload)
-    except LookupError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.") from None
