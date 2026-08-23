@@ -102,7 +102,7 @@ function IncidentDetailModal({
       />
 
       <section
-        className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 shadow-xl"
+        className="relative z-10 max-h-[90vh] w-full min-w-0 max-w-2xl overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -118,14 +118,16 @@ function IncidentDetailModal({
           </button>
         </div>
 
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          <div className="sm:col-span-2">
+        <dl className="mt-4 grid min-w-0 gap-3 text-sm sm:grid-cols-2">
+          <div className="min-w-0 sm:col-span-2">
             <dt className="font-medium text-slate-700">Title</dt>
-            <dd className="mt-1 text-slate-900">{incident.title}</dd>
+            <dd className="mt-1 break-words text-slate-900">{incident.title}</dd>
           </div>
-          <div className="sm:col-span-2">
+          <div className="min-w-0 sm:col-span-2">
             <dt className="font-medium text-slate-700">Description</dt>
-            <dd className="mt-1 whitespace-pre-wrap text-slate-900">{incident.description}</dd>
+            <dd className="mt-1 min-w-0 break-words whitespace-pre-wrap text-slate-900">
+              {incident.description}
+            </dd>
           </div>
           <div>
             <dt className="font-medium text-slate-700">Category</dt>
@@ -369,9 +371,9 @@ export function IncidentListPanel() {
                     }`}
                     onClick={() => setSelectedIncidentId(incident.id)}
                   >
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{incident.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{preview}</p>
+                    <td className="min-w-0 max-w-md px-4 py-3">
+                      <p className="break-words font-medium text-slate-900">{incident.title}</p>
+                      <p className="mt-1 break-words text-xs text-slate-500">{preview}</p>
                     </td>
                     <td className="px-4 py-3">{CATEGORY_LABELS[incident.category]}</td>
                     <td className="px-4 py-3">{ORIGIN_LABELS[incident.origin]}</td>
