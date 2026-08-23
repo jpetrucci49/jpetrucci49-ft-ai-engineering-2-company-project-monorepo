@@ -60,7 +60,7 @@ function formatTimestamp(value: string): string {
   return date.toLocaleString();
 }
 
-function IncidentDetailPanel({
+function IncidentDetailModal({
   incident,
   onClose,
   onStatusChange,
@@ -73,69 +73,102 @@ function IncidentDetailPanel({
 }) {
   const options = [incident.status, ...getAllowedNextStatuses(incident.status)];
 
-  return (
-    <section className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-900">Incident details</h2>
-        <button
-          type="button"
-          className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
 
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <dt className="font-medium text-slate-700">Title</dt>
-          <dd className="mt-1 text-slate-900">{incident.title}</dd>
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="incident-detail-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-900/50"
+        aria-label="Close incident details"
+        onClick={onClose}
+      />
+
+      <section
+        className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h2 id="incident-detail-title" className="text-lg font-semibold text-slate-900">
+            Incident details
+          </h2>
+          <button
+            type="button"
+            className="rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+            onClick={onClose}
+          >
+            Close
+          </button>
         </div>
-        <div className="sm:col-span-2">
-          <dt className="font-medium text-slate-700">Description</dt>
-          <dd className="mt-1 whitespace-pre-wrap text-slate-900">{incident.description}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Category</dt>
-          <dd className="mt-1 text-slate-900">{CATEGORY_LABELS[incident.category]}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Origin</dt>
-          <dd className="mt-1 text-slate-900">{ORIGIN_LABELS[incident.origin]}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Branch</dt>
-          <dd className="mt-1 text-slate-900">{BRANCH_LABELS[incident.branch]}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Status</dt>
-          <dd className="mt-1">
-            <select
-              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-              value={incident.status}
-              onChange={(event) =>
-                void onStatusChange(incident, event.target.value as IncidentStatus)
-              }
-            >
-              {options.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-            {statusError ? <p className="mt-1 text-xs text-red-600">{statusError}</p> : null}
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Created</dt>
-          <dd className="mt-1 text-slate-900">{formatTimestamp(incident.created_at)}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-700">Last updated</dt>
-          <dd className="mt-1 text-slate-900">{formatTimestamp(incident.updated_at)}</dd>
-        </div>
-      </dl>
-    </section>
+
+        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <dt className="font-medium text-slate-700">Title</dt>
+            <dd className="mt-1 text-slate-900">{incident.title}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="font-medium text-slate-700">Description</dt>
+            <dd className="mt-1 whitespace-pre-wrap text-slate-900">{incident.description}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Category</dt>
+            <dd className="mt-1 text-slate-900">{CATEGORY_LABELS[incident.category]}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Origin</dt>
+            <dd className="mt-1 text-slate-900">{ORIGIN_LABELS[incident.origin]}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Branch</dt>
+            <dd className="mt-1 text-slate-900">{BRANCH_LABELS[incident.branch]}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Status</dt>
+            <dd className="mt-1">
+              <select
+                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+                value={incident.status}
+                onChange={(event) =>
+                  void onStatusChange(incident, event.target.value as IncidentStatus)
+                }
+              >
+                {options.map((status) => (
+                  <option key={status} value={status}>
+                    {STATUS_LABELS[status]}
+                  </option>
+                ))}
+              </select>
+              {statusError ? <p className="mt-1 text-xs text-red-600">{statusError}</p> : null}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Created</dt>
+            <dd className="mt-1 text-slate-900">{formatTimestamp(incident.created_at)}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-slate-700">Last updated</dt>
+            <dd className="mt-1 text-slate-900">{formatTimestamp(incident.updated_at)}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
   );
 }
 
@@ -286,15 +319,6 @@ export function IncidentListPanel() {
         </div>
       </div>
 
-      {selectedIncident ? (
-        <IncidentDetailPanel
-          incident={selectedIncident}
-          onClose={() => setSelectedIncidentId(null)}
-          onStatusChange={handleStatusChange}
-          statusError={statusErrors[selectedIncident.id]}
-        />
-      ) : null}
-
       {isLoading ? <p className="text-sm text-slate-600">Loading incidents…</p> : null}
 
       {error ? (
@@ -343,9 +367,7 @@ export function IncidentListPanel() {
                     className={`cursor-pointer border-b border-slate-100 align-top transition-colors hover:bg-slate-50 ${
                       isSelected ? "bg-blue-50 hover:bg-blue-50" : ""
                     }`}
-                    onClick={() =>
-                      setSelectedIncidentId((current) => (current === incident.id ? null : incident.id))
-                    }
+                    onClick={() => setSelectedIncidentId(incident.id)}
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900">{incident.title}</p>
@@ -378,6 +400,15 @@ export function IncidentListPanel() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {selectedIncident ? (
+        <IncidentDetailModal
+          incident={selectedIncident}
+          onClose={() => setSelectedIncidentId(null)}
+          onStatusChange={handleStatusChange}
+          statusError={statusErrors[selectedIncident.id]}
+        />
       ) : null}
     </div>
   );
