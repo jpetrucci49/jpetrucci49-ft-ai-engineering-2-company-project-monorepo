@@ -1,7 +1,7 @@
-# HealthCore — Testing Guide (AUTH-088 + API-042 + FE-019)
+# HealthCore — Testing Guide (AUTH-088 + API-042 + FE-019 + M12)
 
-**Tickets:** AUTH-088 (authentication API), API-042 (backoffice API), FE-019 (frontend utilities)  
-**Specs:** [`specs/10_SPECS.md`](specs/10_SPECS.md), [`specs/10_SPECS_EXTRA.md`](specs/10_SPECS_EXTRA.md)
+**Tickets:** AUTH-088 (authentication API), API-042 (backoffice API), FE-019 (frontend utilities), M12 (error handling)  
+**Specs:** [`specs/10_SPECS.md`](specs/10_SPECS.md), [`specs/10_SPECS_EXTRA.md`](specs/10_SPECS_EXTRA.md), [`specs/12_SPECS.md`](specs/12_SPECS.md)
 
 This document lives at the **monorepo root** (`TESTING.md`) and is the **test plan and testing guide** for FastAPI logic in `services/api/` and utility helpers in TypeScript frontends. Tests assert **business logic** — what the application *decides* — not HTTP serialisation or framework plumbing.
 
@@ -361,6 +361,77 @@ Tests live in `uis/talent-pipeline-tracker/__tests__/`.
 
 ---
 
+## Error handling (M12)
+
+Automated and manual checks for validation sanitization, BFF proxy behaviour, and script failure paths.
+
+### FastAPI — validation messages
+
+Module: `services/api/tests/test_validation_errors.py`
+
+```bash
+cd services/api
+uv run pytest tests/test_validation_errors.py -v
+```
+
+Asserts field-labelled messages (e.g. `Title should have at least 1 character`) and that `input` is stripped from `detail` payloads.
+
+Password-reset email failure rollback: `tests/test_forgot_password.py` (`test_f4`).
+
+### TypeScript — `humanizeValidationMessage`
+
+Module: `packages/shared/auth/__tests__/errors.test.ts`
+
+```bash
+npm run test:auth
+```
+
+### Manual — API validation
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"your-password"}' | jq -r .access_token)
+
+curl -s -X POST http://127.0.0.1:8000/incidents \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"","description":"x","category":"other","origin":"internal","branch":"central"}' | jq .
+# Expect detail[0].msg naming "Title", no "input" field
+```
+
+### Manual — BFF / UI
+
+1. Stop the API (`Ctrl+C` on `npm run dev:api`).
+2. In backoffice, open `/incidents/manage` or `/suppliers` — expect error state with retry, not a raw stack trace.
+3. BFF routes should return **502** with a generic network message.
+
+### Scripts — exit codes
+
+From **repo root**:
+
+```bash
+uv run python scripts/analyze.py              # exit 1 — missing CSV arg
+uv run python scripts/analyze.py /no/such.csv # exit 1 — missing file
+uv run python scripts/analyze.py scripts/incidents.csv  # exit 0
+```
+
+With the API venv, paths are relative to `services/api/` — use `../../scripts/`:
+
+```bash
+uv run --directory services/api python ../../scripts/analyze.py ../../scripts/incidents.csv
+```
+
+**Wrong path** (Python cannot find the script → exit **2**, not **1**):
+
+```bash
+uv run --directory services/api python scripts/analyze.py   # do not use
+```
+
+See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full table.
+
+---
+
 ## AI-assisted workflow
 
 1. **Plan first** — cases listed in this file before writing tests (§ Planned test cases).
@@ -406,7 +477,13 @@ Tests live in `uis/talent-pipeline-tracker/__tests__/`.
 - [x] `test_suppliers.py` and `test_incidents.py`
 - [x] ≥ 3 tests per endpoint group
 - [x] ≥ **60%** coverage on tested modules (current: models **83%**, suppliers route **72%**, incidents analysis **90%**)
-- [x] `uv run pytest` passes (**79** tests total)
+- [x] `uv run pytest` passes (**89** tests total)
+
+### M12 — error handling
+
+- [x] `tests/test_validation_errors.py` — field-labelled validation messages
+- [x] `packages/shared/auth/__tests__/errors.test.ts` — `humanizeValidationMessage`
+- [x] Script failure paths documented in [`scripts/README.md`](scripts/README.md#exit-codes-and-errors)
 
 ### FE-019 — frontend Jest
 

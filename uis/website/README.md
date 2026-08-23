@@ -37,4 +37,5 @@ Default URL: `http://localhost:3000`
 
 - EN/ES language toggle applies app-wide via `LanguageProvider`
 - Form field `name` attributes and validation rules match `context/01_CONTEXT.md`
+- `app/global-error.tsx` — safe fallback copy for uncaught errors (M12); no raw exception text shown to visitors
 - Legacy static site remains at repository root until migration is approved

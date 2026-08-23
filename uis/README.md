@@ -18,6 +18,8 @@ npm run dev
 
 Dev hub with links: http://localhost:4173
 
+All apps use the M12 BFF error proxy (`lib/api/bff-proxy.ts` in backoffice and talent-tracker) and safe error boundaries — see each app's README.
+
 ## Run one app
 
 ```bash

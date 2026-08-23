@@ -1,6 +1,6 @@
 # HealthCore Operations Backoffice
 
-Internal dashboard: M2 operational utilities, M5 incident CSV analysis, M6 supplier directory, M11 centralized incident manager.
+Internal dashboard: M2 operational utilities, M5 incident CSV analysis, M6 supplier directory, M11 centralized incident manager, M12 error handling.
 
 ## Stack
 
@@ -56,7 +56,7 @@ API-level curl tests: [`services/api/README.md`](../../services/api/README.md#te
 
 ## BFF proxy pattern
 
-The browser calls same-origin `/api/*` routes. Next.js proxies server-side to FastAPI at `http://127.0.0.1:8000` — no direct browser access to port 8000, avoiding CORS and Codespaces port-forwarding issues.
+The browser calls same-origin `/api/*` routes. Next.js proxies server-side to FastAPI at `http://127.0.0.1:8000` (no direct browser access to port 8000) and forwards the bearer token from `localStorage` via `authFetch`.
 
 | Env var | Default | Used by |
 | --- | --- | --- |
@@ -64,7 +64,17 @@ The browser calls same-origin `/api/*` routes. Next.js proxies server-side to Fa
 | `SUPPLIERS_API_URL` | `http://127.0.0.1:8000` | `/api/suppliers/*` |
 | `AUTH_API_URL` | `http://127.0.0.1:8000` | `/api/auth/*`, `/api/users`, `/api/profiles/*` |
 
-The browser calls same-origin `/api/*` routes. Next.js proxies server-side to FastAPI and forwards the bearer token from `localStorage` via `authFetch`.
+### Error handling (M12)
+
+| File | Role |
+| --- | --- |
+| `lib/api/bff-proxy.ts` | `runBffHandler()` — JSON parse errors → **400**, upstream/network failures → **502**, sanitizes validation `detail` |
+| `components/ui/ErrorState.tsx` | Reusable error panel with optional retry |
+| `app/error.tsx`, `app/global-error.tsx` | Safe user-facing copy (no raw `error.message`) |
+
+List, summary, supplier, and profile flows show **loading / error / success** states with retry where appropriate. Shared helpers: `packages/shared/api/errors.ts`, `packages/shared/auth/errors.ts` (`humanizeValidationMessage`).
+
+Spec / audit: `specs/12_SPECS.md` · Progress: `memory-bank/progress.md` § M12.
 
 ## Feature reference
 

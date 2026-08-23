@@ -9,6 +9,6 @@ Each subfolder inside `services/` must correspond to **one specific service** (f
 
 | Service | README | Features |
 | --- | --- | --- |
-| `api/` | [`api/README.md`](api/README.md) | Auth (M7–M9), incident CSV analysis (M5), incident manager (M11), supplier directory (M6) |
+| `api/` | [`api/README.md`](api/README.md) | Auth (M7–M9), incident CSV analysis (M5), incident manager (M11), supplier directory (M6), error handling (M12) |
 
 > _Spanish version: [README.es.md](./README.es.md)._

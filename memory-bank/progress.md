@@ -105,10 +105,10 @@ _Last updated: Milestone 11 complete — Centralized Incident Manager_
 ### Milestone 10 — Authentication API unit tests (AUTH-088)
 
 - [x] Spec: `specs/10_SPECS.md`; test plan: `TESTING.md`
-- [x] `services/api/tests/` — pytest suite (67 tests) with isolated TinyDB fixtures
+- [x] `services/api/tests/` — pytest suite (**89** tests) with isolated TinyDB fixtures
 - [x] Coverage **91%** on `auth/` (`uv run pytest --cov=auth`)
 - [x] Jest config (`jest.config.mjs`) + tests in `packages/shared/auth/__tests__/`
-- [x] `npm run test:auth` — 8 Jest tests for errors, token, cross-app helpers
+- [x] `npm run test:auth` — **10** Jest tests for errors, token, cross-app helpers
 
 ### Milestone 10 Extra — API-042 + FE-019
 
@@ -135,6 +135,7 @@ _Last updated: Milestone 11 complete — Centralized Incident Manager_
 - [x] Frontend: `ErrorState` component, retry/home CTAs, `error.tsx` / `global-error.tsx` in internal apps
 - [x] API client libs: network/JSON try/catch wrappers
 - [x] Scripts: `seed_incidents.py`, `analyze.py` — defensive I/O with `sys.exit(1)`
+- [x] Docs: READMEs, `TESTING.md`, `scripts/README.md` — M12 paths, exit codes, validation behaviour
 
 ## In progress
 

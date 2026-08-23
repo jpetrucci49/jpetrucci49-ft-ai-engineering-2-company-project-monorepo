@@ -1,4 +1,6 @@
-# Error Handling Audit Report
+# Error Handling Audit Report (Milestone 12)
+
+> **Status:** Remediation complete — see [`memory-bank/progress.md`](../memory-bank/progress.md) § M12. This file preserves the original audit findings that drove the fixes.
 
 Repository-wide review of `/uis/`, `/services/api/`, `/scripts/`, `/packages/`, and `/src/utils/`. Findings are ordered **CRITICAL → HIGH → MEDIUM → LOW** within each severity band.
 

@@ -10,6 +10,7 @@ FastAPI service for internal HealthCore Digital tools:
 | M8 | Frontend auth (login, guards, BFF token forward) | `/login`, `/account/profile` |
 | M9 | Password reset + change | `/forgot-password`, `/reset-password`, `/account/change-password` |
 | M11 | Incident manager (TinyDB lifecycle CRUD) | `/incidents/register`, `/incidents/manage`, `/incidents/summary` |
+| M12 | Error handling hardening | Field-specific validation messages, BFF error proxy, UI error states |
 
 ## Stack
 
@@ -77,7 +78,7 @@ curl -s "$BASE/suppliers" -H "Authorization: Bearer $TOKEN"
 
 Spec: `specs/09_SPECS_BACK.md`.
 
-Reset tokens are opaque, single-use, and stored hashed in TinyDB (`password_reset_tokens` table in `auth.json`). The `/auth/forgot-password` endpoint always returns **200** with the same message — it never reveals whether an email is registered.
+Reset tokens are opaque, single-use, and stored hashed in TinyDB (`password_reset_tokens` table in `auth.json`). The `/auth/forgot-password` endpoint always returns **200** with the same message — it never reveals whether an email is registered. If email delivery fails for a registered user, the API logs the error, **revokes the unused token**, and still returns **200** (anti-enumeration).
 
 ### Environment variables
 
@@ -221,6 +222,40 @@ All manager routes require a bearer token. UI: `uis/backoffice/app/(authenticate
 
 Shared TypeScript constants: `packages/shared/incidents/` (`@healthcore/incidents` in backoffice).
 
+## Error handling and validation (M12)
+
+Spec / audit: `specs/12_SPECS.md` · Progress: `memory-bank/progress.md` § M12.
+
+| Area | Behaviour |
+| --- | --- |
+| Validation errors | `400` with `detail` array; messages name the field (e.g. `Title should have at least 1 character`) — no submitted `input` echoed |
+| Unhandled errors | `500` with generic `"An unexpected error occurred."` |
+| Password reset | Failed email send → token revoked, logged; HTTP **200** unchanged for enumeration safety |
+
+Humanization logic: `app/core/validation_errors.py`. Tests: `tests/test_validation_errors.py`.
+
+Example — empty title on incident create:
+
+```bash
+curl -s -X POST "$BASE/api/incidents" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"","description":"x","category":"other","origin":"internal","branch":"central"}' | jq .
+# detail[0].msg → "Title should have at least 1 character"
+```
+
+## Automated tests
+
+From `services/api/`:
+
+```bash
+uv sync --group dev
+uv run pytest                # 89 tests
+uv run pytest tests/test_validation_errors.py -v   # M12 field-labelled messages
+```
+
+Full test plan and manual M12 checks: root [`TESTING.md`](../../TESTING.md).
+
 ## CORS and architecture
 
 CORS defaults cover `localhost:3001` and Codespaces (`*.github.dev`). The backoffice normally proxies server-side, so CORS is not required for standard UI flows.
@@ -237,7 +272,8 @@ Browser → backoffice :3001 /api/{incidents,suppliers}/*
 
 ```text
 services/api/
-  app/main.py           ← FastAPI app
+  app/main.py           ← FastAPI app + validation error handler
+  app/core/validation_errors.py  ← Field-specific API error messages (M12)
   auth/                 ← JWT module (M7) + password reset (M9)
   routes/               ← auth, users, profiles, suppliers
   app/incidents/        ← csv_validation, analysis (M5), manager (M11)
