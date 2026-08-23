@@ -28,6 +28,8 @@ import {
 } from "@healthcore/incidents/labels";
 import { getAllowedNextStatuses } from "@healthcore/incidents/lifecycle";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 function readFilters(searchParams: URLSearchParams): IncidentListFilters {
   const filters: IncidentListFilters = {};
 
@@ -321,7 +323,7 @@ export function IncidentListPanel() {
         </div>
       </div>
 
-      {isLoading ? <p className="text-sm text-slate-600">Loading incidents…</p> : null}
+      {isLoading ? <LoadingState label="Loading incidents…" /> : null}
 
       {error ? (
         <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">

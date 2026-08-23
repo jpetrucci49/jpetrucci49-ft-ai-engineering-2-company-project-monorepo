@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { bootstrapAuthSession, isAuthenticated } from "@healthcore/auth";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -22,11 +24,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [pathname, router]);
 
   if (!ready) {
-    return (
-      <p className="text-sm font-medium text-slate-600" role="status" aria-live="polite">
-        Checking session…
-      </p>
-    );
+    return <LoadingState label="Checking session…" layout="fullscreen" />;
   }
 
   return children;

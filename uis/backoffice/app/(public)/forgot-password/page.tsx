@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-600">Loading…</p>}>
+    <Suspense fallback={<LoadingState label="Loading…" />}>
       <ForgotPasswordForm />
     </Suspense>
   );

@@ -7,6 +7,8 @@ import { IncidentResultsSummary } from "@/components/incidents/IncidentResultsSu
 import { analyzeIncidents, downloadBlob, exportIncidentResults } from "@/lib/api/incidents";
 import { IncidentsApiError, type AnalysisResult } from "@/types/incidents";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof IncidentsApiError || error instanceof Error) {
     return error.message;
@@ -70,11 +72,7 @@ export function IncidentAnalysisPage() {
 
       <IncidentFileUpload onFileSelected={handleUpload} disabled={isUploading} />
 
-      {isUploading && (
-        <p className="text-sm font-medium text-teal-700" role="status" aria-live="polite">
-          Analyzing uploaded file…
-        </p>
-      )}
+      {isUploading ? <LoadingState label="Analyzing uploaded file…" layout="inline" /> : null}
 
       {uploadError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">

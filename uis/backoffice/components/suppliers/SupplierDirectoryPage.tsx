@@ -15,6 +15,8 @@ import {
   type SupplierListFilters,
 } from "@/types/suppliers";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof SuppliersApiError || error instanceof Error) {
     return error.message;
@@ -157,11 +159,7 @@ export function SupplierDirectoryPage() {
           />
         )}
 
-        {isLoading && (
-          <p className="text-sm font-medium text-teal-700" role="status" aria-live="polite">
-            Loading suppliers…
-          </p>
-        )}
+        {isLoading ? <LoadingState label="Loading suppliers…" /> : null}
 
         {listError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">

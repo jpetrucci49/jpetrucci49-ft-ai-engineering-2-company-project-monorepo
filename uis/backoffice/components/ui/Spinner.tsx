@@ -1,12 +1,13 @@
 interface SpinnerProps {
   label?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   variant?: "default" | "inverse";
 }
 
 const SIZE_CLASSES = {
   sm: "h-4 w-4",
   md: "h-5 w-5",
+  lg: "h-8 w-8",
 } as const;
 
 const VARIANT_CLASSES = {

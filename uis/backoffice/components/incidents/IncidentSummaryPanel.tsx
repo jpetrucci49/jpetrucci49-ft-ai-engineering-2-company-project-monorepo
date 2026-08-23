@@ -12,6 +12,8 @@ import {
   STATUS_LABELS,
 } from "@healthcore/incidents/labels";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 type SummaryFilterParam = "status" | "category" | "origin" | "branch";
 
 function buildManageUrl(filterParam: SummaryFilterParam, value: string): string {
@@ -109,7 +111,7 @@ export function IncidentSummaryPanel() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-600">Loading summary…</p>;
+    return <LoadingState label="Loading summary…" />;
   }
 
   if (error) {
