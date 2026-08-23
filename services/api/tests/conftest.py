@@ -39,6 +39,17 @@ def auth_db(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, 
     auth_database._db = None
 
 
+@pytest.fixture(autouse=True)
+def incidents_db(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
+    db_path = tmp_path / "incidents.json"
+    monkeypatch.setenv("INCIDENTS_DB_PATH", str(db_path))
+    import incidents_database
+
+    incidents_database._db = None
+    yield
+    incidents_database._db = None
+
+
 @pytest.fixture
 def mock_reset_email():
     with patch("auth.services.password_reset.send_password_reset_email") as mocked:

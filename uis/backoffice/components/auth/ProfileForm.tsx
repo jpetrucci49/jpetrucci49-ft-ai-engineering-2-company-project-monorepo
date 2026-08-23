@@ -7,6 +7,8 @@ import { authFetch } from "@healthcore/auth";
 import { parseApiError } from "@healthcore/auth";
 import type { AuthMe, ProfileUpdatePayload } from "@healthcore/auth";
 
+import { LoadingState } from "@/components/ui/LoadingState";
+
 export function ProfileForm() {
   const [account, setAccount] = useState<AuthMe | null>(null);
   const [name, setName] = useState("");
@@ -83,11 +85,7 @@ export function ProfileForm() {
   }
 
   if (loading) {
-    return (
-      <p className="text-sm font-medium text-slate-600" role="status">
-        Loading profile…
-      </p>
-    );
+    return <LoadingState label="Loading profile…" />;
   }
 
   if (error && !account) {

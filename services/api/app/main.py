@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import get_cors_origin_regex, get_cors_origins
+from app.incidents.manager_router import router as incident_manager_router
 from app.incidents.router import router as incidents_router
 from auth.config import get_jwt_secret, validate_password_reset_config
 from routes.auth import router as auth_router
@@ -38,8 +41,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(status_code=400, content={"detail": exc.errors()})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred."},
+    )
+
+
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(incidents_router, prefix="/api")
+app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)

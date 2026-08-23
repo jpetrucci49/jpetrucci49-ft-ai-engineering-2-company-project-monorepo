@@ -7,7 +7,10 @@ import { appUrls, crossAppNav, crossAppNavLabels } from "@healthcore/navigation"
 
 const navItems = [
   { href: "/", label: "Dashboard" },
-  { href: "/incidents", label: "Incidents" },
+  { href: "/incidents", label: "CSV analysis" },
+  { href: "/incidents/register", label: "Register incident" },
+  { href: "/incidents/manage", label: "Incident list" },
+  { href: "/incidents/summary", label: "Incident summary" },
   { href: "/suppliers", label: "Suppliers" },
   { href: crossAppNav.paths.backofficeUtilities, label: crossAppNavLabels.utilities },
   { href: "/account/profile", label: "Account" },

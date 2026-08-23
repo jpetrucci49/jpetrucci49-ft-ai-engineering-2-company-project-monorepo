@@ -3,12 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from app.incidents.analysis import (
+from app.incidents.analysis import SCORE_LABELS
+from app.incidents.csv_validation import (
     BREAKDOWN_RULES,
     CATEGORIES,
     COUNTRIES,
     INVALID_RULE_LABELS,
-    SCORE_LABELS,
     STATUSES,
 )
 

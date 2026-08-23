@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 10 complete — authentication API unit tests (AUTH-088)_
+_Last updated: Milestone 11 complete — Centralized Incident Manager_
 
 ## Completed
 
@@ -117,6 +117,14 @@ _Last updated: Milestone 10 complete — authentication API unit tests (AUTH-088
 - [x] Coverage ≥ **60%** on supplier/incident modules (models **83%**, `routes/suppliers` **72%**, `app/incidents/analysis` **90%**)
 - [x] `uis/talent-pipeline-tracker/__tests__/` — validation + labels (10 Jest tests, **~86%** line coverage)
 - [x] `npm run test:tracker`; `TESTING.md` updated
+
+### Milestone 11 — Centralized Incident Manager
+
+- [x] Spec: `specs/11_SPECS.md`; context: `context/11_CONTEXT.md`
+- [x] Incident CRUD API (`/api/incidents`, status lifecycle, summary)
+- [x] `csv_validation.py` extracted; `scripts/seed_incidents.py` (94 valid rows, idempotent)
+- [x] `packages/shared/incidents/` — constants, labels, lifecycle helpers
+- [x] Backoffice: register, list (filters + status updates), summary pages + BFF
 
 ## In progress
 

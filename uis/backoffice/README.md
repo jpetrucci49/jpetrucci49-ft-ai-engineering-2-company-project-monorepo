@@ -1,6 +1,6 @@
 # HealthCore Operations Backoffice
 
-Internal dashboard: M2 operational utilities, M5 incident analysis, M6 supplier directory.
+Internal dashboard: M2 operational utilities, M5 incident CSV analysis, M6 supplier directory, M11 centralized incident manager.
 
 ## Stack
 
@@ -16,7 +16,7 @@ cd services/api && uv sync && cp .env.example .env && uv run seed && cd ../..
 npm run dev
 ```
 
-Set `JWT_SECRET` in `services/api/.env`. For password reset (M9), also set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `PASSWORD_RESET_URL` — see [`services/api/README.md`](../../services/api/README.md#password-recovery-and-change-m9). Seed is idempotent — `0 inserted` with `15 total` means suppliers are already loaded.
+Set `JWT_SECRET` in `services/api/.env`. For password reset (M9), also set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `PASSWORD_RESET_URL` — see [`services/api/README.md`](../../services/api/README.md#password-recovery-and-change-m9). Supplier seed is idempotent (`0 inserted` with `15 total` means already loaded). Incident manager seed: [`scripts/README.md`](../../scripts/README.md#seed_incidentspy).
 
 This app only:
 
@@ -37,7 +37,10 @@ Ensure the API is running (`npm run dev:api` or full `npm run dev`).
 | `/account/profile`, `/account/change-password` | M8/M9 | Profile and password change (authenticated) |
 | `/` | M2 | Operations dashboard (billing, clinical, CME) |
 | `/utilities` | M2 | Utility function manual runner |
-| `/incidents` | M5 | Patient incident CSV upload and analysis |
+| `/incidents` | M5 | Patient incident CSV upload and aggregate analysis |
+| `/incidents/register` | M11 | Register a new incident (PHI warning on description) |
+| `/incidents/manage` | M11 | List, filter, and update incident status |
+| `/incidents/summary` | M11 | Leadership metrics by status, category, origin, branch |
 | `/suppliers` | M6 | Supplier directory — browse, filter, register, rate/status |
 
 ## Testing password recovery (M9)
@@ -57,7 +60,7 @@ The browser calls same-origin `/api/*` routes. Next.js proxies server-side to Fa
 
 | Env var | Default | Used by |
 | --- | --- | --- |
-| `INCIDENTS_API_URL` | `http://127.0.0.1:8000` | `/api/incidents/*` |
+| `INCIDENTS_API_URL` | `http://127.0.0.1:8000` | `/api/incidents/*` (M5 analyze/export and M11 manager) |
 | `SUPPLIERS_API_URL` | `http://127.0.0.1:8000` | `/api/suppliers/*` |
 | `AUTH_API_URL` | `http://127.0.0.1:8000` | `/api/auth/*`, `/api/users`, `/api/profiles/*` |
 
@@ -65,16 +68,36 @@ The browser calls same-origin `/api/*` routes. Next.js proxies server-side to Fa
 
 ## Feature reference
 
-### Incidents (M5)
+### Incidents — CSV analysis (M5)
 
 | File | Role |
 | --- | --- |
-| `lib/api/incidents.ts` | Client fetch helpers |
+| `lib/api/incidents.ts` | Client fetch helpers (analyze, export) |
 | `lib/api/incidents-server.ts` | Server proxy utilities |
-| `app/api/incidents/*/route.ts` | BFF handlers |
-| `components/incidents/` | Upload UI and results |
+| `app/api/incidents/analyze/route.ts` | Upload BFF |
+| `app/api/incidents/results/export/route.ts` | Export BFF |
+| `components/incidents/IncidentAnalysisPage.tsx` | Upload UI and results |
 
 Test CSV: `scripts/incidents.csv`.
+
+### Incidents — manager (M11)
+
+| File | Role |
+| --- | --- |
+| `lib/api/incidents-manager.ts` | Client fetch helpers (CRUD, summary, status) |
+| `app/api/incidents/route.ts` | List + create BFF |
+| `app/api/incidents/summary/route.ts` | Summary BFF |
+| `app/api/incidents/[id]/status/route.ts` | Status update BFF |
+| `components/incidents/IncidentRegisterForm.tsx` | Registration form |
+| `components/incidents/IncidentListPanel.tsx` | Filterable list + inline status |
+| `components/incidents/IncidentSummaryPanel.tsx` | Aggregate metrics |
+| `packages/shared/incidents/` | Shared enums, labels, lifecycle rules (`@healthcore/incidents`) |
+
+Spec: `specs/11_SPECS.md`. After seeding (see [`scripts/README.md`](../../scripts/README.md#seed_incidentspy)), summary totals should show 94 incidents (`context/11_CONTEXT.md`).
+
+- **Register:** all model fields; branch highlighted when origin is `branch`; prominent PHI warning on description
+- **List:** filters for status, origin, branch; empty and error states; status dropdown respects lifecycle
+- **Summary:** aggregate metrics by status, category, origin, and branch
 
 ### Suppliers (M6)
 

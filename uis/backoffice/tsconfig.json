@@ -20,6 +20,8 @@
       "@healthcore/auth/*": ["../../packages/shared/auth/*"],
       "@healthcore/api/*": ["../../packages/shared/api/*"],
       "@healthcore/navigation": ["../../packages/shared/navigation/index.ts"],
+      "@healthcore/incidents": ["../../packages/shared/incidents/index.ts"],
+      "@healthcore/incidents/*": ["../../packages/shared/incidents/*"],
       "@healthcore/utils": ["../../src/utils/index.ts"],
       "@healthcore/utils/*": ["../../src/utils/*"],
       "@healthcore/fixtures": ["../../tests/utils/fixtures.ts"],
@@ -37,7 +39,8 @@
     "../../src/utility-registry.ts",
     "../../tests/utils/fixtures.ts",
     "../../packages/shared/auth/**/*.ts",
-    "../../packages/shared/api/**/*.ts"
+    "../../packages/shared/api/**/*.ts",
+    "../../packages/shared/incidents/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

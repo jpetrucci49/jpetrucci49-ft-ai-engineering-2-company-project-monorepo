@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-600">Loading…</p>}>
+    <Suspense fallback={<LoadingState label="Loading…" />}>
       <ResetPasswordForm />
     </Suspense>
   );

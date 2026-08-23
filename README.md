@@ -3,7 +3,7 @@
 HealthCore project workspace containing:
 
 - **Next.js applications** under `uis/` (public website, operations, talent pipeline tracker)
-- **FastAPI backend** under `services/api/` (auth, incident analysis, supplier directory)
+- **FastAPI backend** under `services/api/` (auth, incident analysis, incident manager, supplier directory)
 - TypeScript business logic in `src/utils`
 - Agent infrastructure (`memory-bank/`, `AGENTS.md`, `.agents/`, `skills/`)
 - Vitest unit tests in `tests/utils`
@@ -16,7 +16,7 @@ cd services/api && uv sync && cp .env.example .env && uv run seed && cd ../..
 npm run dev
 ```
 
-Set `JWT_SECRET` in `services/api/.env` (required for the API). The seed step is idempotent — safe to run again.
+Set `JWT_SECRET` in `services/api/.env` (required for the API). Supplier seed is idempotent — safe to run again. To load incident manager data, see [`scripts/README.md`](scripts/README.md#seed_incidentspy).
 
 ### Testing admin-only API behaviour
 
@@ -68,10 +68,13 @@ See [`services/api/README.md`](services/api/README.md#password-recovery-and-chan
 | Public website | http://localhost:3000 | Bilingual corporate site + patient enquiry |
 | Operations | http://localhost:3001 | Billing, clinical, CME dashboards |
 | Utility tester | http://localhost:3001/utilities | M2 function manual runner |
-| Incident analysis | http://localhost:3001/incidents | CSV upload + summary (M5) |
+| Incident analysis | http://localhost:3001/incidents | CSV upload + aggregate summary (M5) |
+| Incident manager | http://localhost:3001/incidents/manage | Register, list, filter, update status (M11) |
+| Register incident | http://localhost:3001/incidents/register | New incident form (M11) |
+| Incident summary | http://localhost:3001/incidents/summary | Totals by status, category, origin, branch (M11) |
 | Supplier directory | http://localhost:3001/suppliers | Browse and manage vendors (M6) |
 | Talent pipeline tracker | http://localhost:3002 | Recruitment pipeline (M3) |
-| HealthCore API | http://localhost:8000 | FastAPI — auth, incidents, suppliers (M5–M9) |
+| HealthCore API | http://localhost:8000 | FastAPI — auth, incidents, suppliers (M5–M11) |
 | API docs | http://localhost:8000/docs | OpenAPI (Swagger) |
 
 ### Individual apps
@@ -97,6 +100,8 @@ Python 3.12+ service managed with [uv](https://docs.astral.sh/uv/). Full setup, 
 uv sync
 uv run python scripts/analyze.py scripts/incidents.csv
 ```
+
+The same CSV feeds the incident manager (M11) — seeding: [`scripts/README.md`](scripts/README.md#seed_incidentspy).
 
 ## Production
 
@@ -131,10 +136,11 @@ Business logic lives in `src/utils/` and is imported by `uis/backoffice` — nev
 | `src/` | M2 TypeScript utilities |
 | `tests/` | Vitest suites and fixtures |
 | `uis/website/` | Public Next.js site (M1) |
-| `uis/backoffice/` | Internal operations dashboard (M4–M6) |
+| `uis/backoffice/` | Internal operations dashboard (M4–M6, M11 incident manager) |
 | `uis/talent-pipeline-tracker/` | Recruitment UI (M3) |
-| `services/api/` | FastAPI backend (M5–M7) |
-| `scripts/` | Python CLI utilities and test data |
+| `services/api/` | FastAPI backend (M5–M11) |
+| `packages/shared/` | Cross-app TypeScript (auth, incidents, navigation) |
+| `scripts/` | Python CLI utilities, test data, and seed scripts |
 | `context/` | Milestone company scenarios (programme-assigned) |
 | `specs/` | Implementation specifications |
 | `public/index.html` | Local dev application hub |
