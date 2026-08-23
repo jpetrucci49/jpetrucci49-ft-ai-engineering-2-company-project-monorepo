@@ -9,6 +9,7 @@ FastAPI service for internal HealthCore Digital tools:
 | M7 | JWT auth + route protection | — |
 | M8 | Frontend auth (login, guards, BFF token forward) | `/login`, `/account/profile` |
 | M9 | Password reset + change | `/forgot-password`, `/reset-password`, `/account/change-password` |
+| M11 | Incident manager (TinyDB lifecycle CRUD) | `/incidents/register`, `/incidents/manage`, `/incidents/summary` |
 
 ## Stack
 
@@ -16,7 +17,7 @@ FastAPI service for internal HealthCore Digital tools:
 | --- | --- |
 | Framework | FastAPI · Python 3.12+ · [uv](https://docs.astral.sh/uv/) |
 | Port | `8000` |
-| Storage | TinyDB — `suppliers.json`, `auth.json` (both gitignored) |
+| Storage | TinyDB — `suppliers.json`, `auth.json`, `incidents.json` (gitignored) |
 | Auth | PyJWT (HS256) + libpass bcrypt |
 
 ## Quick start
@@ -28,6 +29,8 @@ cp .env.example .env          # set JWT_SECRET (required)
 uv run seed                   # load 15 suppliers (idempotent)
 uv run --env-file .env uvicorn app.main:app --reload --port 8000
 ```
+
+Incident manager seed: [`scripts/README.md`](../../scripts/README.md#seed_incidentspy).
 
 From the repo root: `npm run dev:api` (loads `services/api/.env`).
 
@@ -196,27 +199,53 @@ curl -X POST http://127.0.0.1:8000/api/incidents/analyze \
 
 Expected for `scripts/incidents.csv`: 100 total, 94 valid, 6 invalid, avg satisfaction 3.58.
 
+## Incident manager (M11)
+
+Spec: `specs/11_SPECS.md` · Context: `context/11_CONTEXT.md`
+
+Persistent incident lifecycle in TinyDB (`incidents.json`). Shared CSV validation lives in `app/incidents/csv_validation.py` (also used by M5 analysis). **Seed data:** [`scripts/README.md`](../../scripts/README.md#seed_incidentspy).
+
+Post-seed summary (`GET /api/incidents/summary`): **94** incidents — status `open` 28, `resolved` 52, `discarded` 14; categories `patient_experience` 61, `billing_error` 20, `other` 13.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/incidents` | Register incident |
+| `GET` | `/api/incidents` | List; optional `?status=`, `?origin=`, `?branch=`, `?category=` |
+| `GET` | `/api/incidents/summary` | Aggregates by status, category, origin, branch |
+| `GET` | `/api/incidents/{id}` | Detail |
+| `PATCH` | `/api/incidents/{id}/status` | Lifecycle update (`open` → `in_progress`/`discarded`; `in_progress` → `resolved`/`discarded`) |
+
+All manager routes require a bearer token. UI: `uis/backoffice/app/(authenticated)/incidents/`.
+
+**PHI policy:** Do not store or return patient identifiers. Registration UI shows a mandatory warning on the description field.
+
+Shared TypeScript constants: `packages/shared/incidents/` (`@healthcore/incidents` in backoffice).
+
 ## CORS and architecture
 
 CORS defaults cover `localhost:3001` and Codespaces (`*.github.dev`). The backoffice normally proxies server-side, so CORS is not required for standard UI flows.
 
 ```text
 Browser → backoffice :3001 /api/{incidents,suppliers}/*
-       → Next.js BFF (server-side)
+       → Next.js BFF (server-side, forwards Authorization)
        → FastAPI :8000
 ```
+
+`/api/incidents` (no suffix) proxies to the M11 manager; `/api/incidents/analyze` and `/api/incidents/results/export` remain M5 CSV analysis.
 
 ## Project layout
 
 ```text
 services/api/
-  app/main.py       ← FastAPI app
-  auth/             ← JWT module (M7) + password reset (M9)
-  routes/           ← auth, users, profiles, suppliers
-  app/incidents/    ← analysis module + router (M5)
-  models.py         ← Supplier Pydantic models
-  database.py       ← Supplier TinyDB
-  seed.py           ← Supplier seeder
-  auth.json         ← Users + profiles (gitignored)
-  suppliers.json    ← Suppliers (gitignored)
+  app/main.py           ← FastAPI app
+  auth/                 ← JWT module (M7) + password reset (M9)
+  routes/               ← auth, users, profiles, suppliers
+  app/incidents/        ← csv_validation, analysis (M5), manager (M11)
+  incidents_database.py ← Incident manager TinyDB
+  models.py             ← Supplier Pydantic models
+  database.py           ← Supplier TinyDB
+  seed.py               ← Supplier seeder
+  auth.json             ← Users + profiles (gitignored)
+  suppliers.json        ← Suppliers (gitignored)
+  incidents.json        ← Incidents (gitignored)
 ```

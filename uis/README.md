@@ -5,7 +5,7 @@ All HealthCore frontend applications live here as independent Next.js apps.
 | App | Port | Routes |
 | --- | --- | --- |
 | `website/` | 3000 | `/`, `/application` |
-| `backoffice/` | 3001 | `/`, `/utilities` |
+| `backoffice/` | 3001 | `/`, `/utilities`, `/incidents`, `/incidents/register`, `/incidents/manage`, `/incidents/summary`, `/suppliers`, auth routes |
 | `talent-pipeline-tracker/` | 3002 | `/`, `/candidates/[id]` |
 
 ## Run all apps

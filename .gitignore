@@ -45,3 +45,4 @@ results.csv
 services/api/.env
 services/api/auth.json
 services/api/suppliers.json
+services/api/incidents.json

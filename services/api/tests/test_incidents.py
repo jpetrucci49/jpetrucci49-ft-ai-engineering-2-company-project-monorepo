@@ -7,11 +7,10 @@ from pathlib import Path
 import app.incidents.store as analysis_store
 import pandas as pd
 import pytest
-from app.incidents.analysis import (
+from app.incidents.analysis import analyze, metrics_to_csv_string
+from app.incidents.csv_validation import (
     INVALID_RULE_LABELS,
-    analyze,
     load_incidents_from_bytes,
-    metrics_to_csv_string,
     validate_columns,
     validate_record,
 )

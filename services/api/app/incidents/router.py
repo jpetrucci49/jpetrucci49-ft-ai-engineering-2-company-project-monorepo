@@ -5,12 +5,8 @@ from fastapi.responses import Response
 
 from auth.dependencies import get_current_user
 from auth.models import UserPublic
-from app.incidents.analysis import (
-    analyze,
-    load_incidents_from_bytes,
-    metrics_to_csv_string,
-    validate_columns,
-)
+from app.incidents.analysis import analyze, metrics_to_csv_string
+from app.incidents.csv_validation import load_incidents_from_bytes, validate_columns
 from app.incidents.schemas import AnalysisResult
 from app.incidents.store import get_last_analysis, metrics_to_response, save_analysis
 
