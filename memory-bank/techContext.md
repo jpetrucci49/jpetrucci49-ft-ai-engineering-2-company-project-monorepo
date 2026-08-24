@@ -29,7 +29,7 @@
 | --- | --- |
 | Root / M2 | TypeScript, Vitest, `concurrently`, `src/utility-registry.ts` |
 | `scripts/` (M5) | Python 3.12+, [uv](https://docs.astral.sh/uv/), pandas |
-| `services/api/` (M5–M7) | Python 3.12+, FastAPI, uvicorn, pandas, TinyDB (M6), PyJWT + libpass (M7) |
+| `services/api/` (M5–M7, M5.5) | Python 3.12+, FastAPI, uvicorn, pandas, TinyDB (M6), SQLModel + psycopg (M5.5 inventory), PyJWT + libpass (M7) |
 | All `uis/*` | Next.js 16, React 19, Tailwind CSS v4 |
 
 ## Architectural decisions
@@ -44,6 +44,7 @@
 8. **M7 authentication** — Users + profiles in TinyDB (`auth.json`); JWT bearer tokens (PyJWT HS256); libpass bcrypt; `JWT_SECRET` required via `services/api/.env`; supplier and incident routes require auth.
 9. **M8 frontend auth** — `localStorage` token; `packages/shared/auth/` + `authFetch`; BFF forwards `Authorization`; internal apps guard routes except `/login` and `/register`; website stays public.
 10. **M9 password recovery (API)** — Reset tokens in TinyDB; Resend transactional email; `PASSWORD_RESET_URL` + `RESEND_*` env vars; public forgot/reset routes; authenticated change-password.
+11. **M5.5 inventory** — SQLModel + psycopg3 (`postgresql+psycopg://` in `SUPABASE_DATABASE_URL`) on Postgres/SQLite; TinyDB auth unchanged; `user_uuid` copied from JWT; `current_stock` aggregated, never stored. Routes under `/inventory`.
 
 ## Technical constraints
 
@@ -75,6 +76,7 @@ uv run --directory services/api python ../../scripts/analyze.py ../../scripts/in
 cd services/api && uv sync && cp .env.example .env && uv run seed && uv run --env-file .env uvicorn app.main:app --reload --port 8000
 npm run dev:api
 uv run --directory services/api seed   # from repo root
+uv run --directory services/api python seed_inventory.py   # inventory (needs a TinyDB user)
 ```
 
 ## Path aliases (backoffice)

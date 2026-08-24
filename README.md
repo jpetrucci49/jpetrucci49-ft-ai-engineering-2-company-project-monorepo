@@ -3,7 +3,7 @@
 HealthCore project workspace containing:
 
 - **Next.js applications** under `uis/` (public website, operations, talent pipeline tracker)
-- **FastAPI backend** under `services/api/` (auth, incident analysis, incident manager, supplier directory, M12 error handling)
+- **FastAPI backend** under `services/api/` (auth, incident analysis, incident manager, supplier directory, medical supply inventory, M12 error handling)
 - TypeScript business logic in `src/utils`
 - Agent infrastructure (`memory-bank/`, `AGENTS.md`, `.agents/`, `skills/`)
 - Vitest unit tests in `tests/utils`
@@ -74,7 +74,7 @@ See [`services/api/README.md`](services/api/README.md#password-recovery-and-chan
 | Incident summary | http://localhost:3001/incidents/summary | Totals by status, category, origin, branch (M11) |
 | Supplier directory | http://localhost:3001/suppliers | Browse and manage vendors (M6) |
 | Talent pipeline tracker | http://localhost:3002 | Recruitment pipeline (M3) |
-| HealthCore API | http://localhost:8000 | FastAPI — auth, incidents, suppliers (M5–M11) |
+| HealthCore API | http://localhost:8000 | FastAPI — auth, incidents, suppliers, inventory (M5–M11, M5.5) |
 | API docs | http://localhost:8000/docs | OpenAPI (Swagger) |
 
 ### Individual apps

@@ -9,6 +9,8 @@ from app.core.config import get_cors_origin_regex, get_cors_origins
 from app.incidents.manager_router import router as incident_manager_router
 from app.incidents.router import router as incidents_router
 from auth.config import get_jwt_secret, validate_password_reset_config
+from inventory.database import init_inventory_schema
+from inventory.router import router as inventory_router
 from routes.auth import router as auth_router
 from routes.profiles import router as profiles_router
 from routes.suppliers import router as suppliers_router
@@ -19,6 +21,7 @@ from routes.users import router as users_router
 async def lifespan(_: FastAPI):
     get_jwt_secret()
     validate_password_reset_config()
+    init_inventory_schema()
     yield
 
 
@@ -67,3 +70,4 @@ app.include_router(profiles_router)
 app.include_router(incidents_router, prefix="/api")
 app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)
+app.include_router(inventory_router)

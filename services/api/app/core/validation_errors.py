@@ -29,6 +29,13 @@ FIELD_LABELS: dict[str, str] = {
     "notes": "Notes",
     "role": "Role",
     "is_active": "Active status",
+    "sku": "SKU",
+    "unit": "Unit",
+    "quantity": "Quantity",
+    "vendor_name": "Vendor name",
+    "clinic_id": "Clinic ID",
+    "supply_id": "Supply ID",
+    "consumption_type": "Consumption type",
 }
 
 _SKIP_LOC_PARTS = frozenset({"body", "query", "path", "header", "cookie"})
@@ -91,6 +98,14 @@ def humanize_validation_error(error: dict) -> dict:
         match = re.search(r"greater than ([0-9.]+)", message)
         threshold = match.group(1) if match else "0"
         safe["msg"] = f"{label} must be greater than {threshold}."
+    elif error_type == "greater_than_equal":
+        match = re.search(r"greater than or equal to ([0-9.]+)", message)
+        threshold = match.group(1) if match else "0"
+        safe["msg"] = f"{label} must be greater than or equal to {threshold}."
+    elif error_type == "less_than_equal":
+        match = re.search(r"less than or equal to ([0-9.]+)", message)
+        threshold = match.group(1) if match else "0"
+        safe["msg"] = f"{label} must be less than or equal to {threshold}."
     elif error_type == "enum":
         safe["msg"] = f"{label} has an invalid value."
     elif error_type in {"enum_type", "literal_error"}:
