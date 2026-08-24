@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 11 complete — Centralized Incident Manager_
+_Last updated: Milestone 5.5 complete — Medical supply inventory API_
 
 ## Completed
 
@@ -136,6 +136,15 @@ _Last updated: Milestone 11 complete — Centralized Incident Manager_
 - [x] API client libs: network/JSON try/catch wrappers
 - [x] Scripts: `seed_incidents.py`, `analyze.py` — defensive I/O with `sys.exit(1)`
 - [x] Docs: READMEs, `TESTING.md`, `scripts/README.md` — M12 paths, exit codes, validation behaviour
+
+### Milestone 5.5 — Inventory management (ORM & dual database)
+
+- [x] Spec: `specs/05.5_SPECS.md`; context: `context/05.5_CONTEXT.md`
+- [x] `services/api/inventory/` — SQLModel models, Pydantic schemas, stock service, `/inventory` router
+- [x] Dual store: TinyDB auth unchanged; inventory on Postgres (Supabase) or local SQLite via `SUPABASE_DATABASE_URL`
+- [x] `current_stock` computed from deliveries − consumptions; outbound rejects insufficient stock (exact 400 message)
+- [x] `seed_inventory.py` — 6 supplies, ≥4 deliveries, ≥3 consumptions; `--reset` for local rebuild
+- [x] `tests/test_inventory.py` — I1–I9 plus duplicate SKU, unknown supply, schema edges (in-memory SQLite)
 
 ## In progress
 

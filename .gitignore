@@ -46,3 +46,5 @@ services/api/.env
 services/api/auth.json
 services/api/suppliers.json
 services/api/incidents.json
+services/api/inventory.db
+services/api/inventory.db-journal

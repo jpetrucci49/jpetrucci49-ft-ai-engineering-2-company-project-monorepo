@@ -50,6 +50,12 @@ def incidents_db(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Generator[None, N
     incidents_database._db = None
 
 
+@pytest.fixture(autouse=True)
+def isolate_inventory_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Never let pytest talk to a developer Supabase/SQLite inventory file."""
+    monkeypatch.delenv("SUPABASE_DATABASE_URL", raising=False)
+
+
 @pytest.fixture
 def mock_reset_email():
     with patch("auth.services.password_reset.send_password_reset_email") as mocked:
@@ -115,3 +121,45 @@ def try_login(email: str, password: str) -> str | None:
     if not verify_password(password, user.hashed_password):
         return None
     return create_access_token(user.id)
+
+
+@pytest.fixture
+def inventory_auth_headers(auth_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {auth_token}"}
+
+
+@pytest.fixture
+def inventory_client() -> Generator:
+    """In-memory SQLite inventory DB for HTTP tests (no live Supabase in CI)."""
+    from fastapi.testclient import TestClient
+    from sqlalchemy.pool import StaticPool
+    from sqlmodel import Session, SQLModel
+
+    from app.main import app
+    from inventory.database import configure_engine, get_db, reset_engine
+    import inventory.models  # noqa: F401
+
+    engine = configure_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+
+    def override_get_db():
+        session = Session(engine, expire_on_commit=False, autoflush=False)
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as client:
+        yield client
+    app.dependency_overrides.pop(get_db, None)
+    SQLModel.metadata.drop_all(engine)
+    reset_engine()

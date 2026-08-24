@@ -1,7 +1,7 @@
 # HealthCore — Testing Guide (AUTH-088 + API-042 + FE-019 + M12)
 
-**Tickets:** AUTH-088 (authentication API), API-042 (backoffice API), FE-019 (frontend utilities), M12 (error handling)  
-**Specs:** [`specs/10_SPECS.md`](specs/10_SPECS.md), [`specs/10_SPECS_EXTRA.md`](specs/10_SPECS_EXTRA.md), [`specs/12_SPECS.md`](specs/12_SPECS.md)
+**Tickets:** AUTH-088 (authentication API), API-042 (backoffice API), FE-019 (frontend utilities), M12 (error handling), M5.5 (inventory)  
+**Specs:** [`specs/10_SPECS.md`](specs/10_SPECS.md), [`specs/10_SPECS_EXTRA.md`](specs/10_SPECS_EXTRA.md), [`specs/12_SPECS.md`](specs/12_SPECS.md), [`specs/05.5_SPECS.md`](specs/05.5_SPECS.md)
 
 This document lives at the **monorepo root** (`TESTING.md`) and is the **test plan and testing guide** for FastAPI logic in `services/api/` and utility helpers in TypeScript frontends. Tests assert **business logic** — what the application *decides* — not HTTP serialisation or framework plumbing.
 
@@ -37,6 +37,7 @@ From the monorepo root:
 ```bash
 uv run --directory services/api pytest
 uv run --directory services/api pytest --cov=auth --cov-report=term-missing
+uv run --directory services/api pytest tests/test_inventory.py -v
 ```
 
 **Coverage target:** ≥ **70%** on the `auth/` package (`uv run pytest --cov=auth`).
@@ -314,6 +315,31 @@ Implement **at minimum** one happy-path, one edge-case, and one failure-mode tes
 | IN5 | Failure | Empty store → `None` | Cold start |
 | IN6 | Failure | No PHI in error/export paths | Compliance |
 
+### Inventory — `test_inventory.py` (M5.5)
+
+HTTP tests use in-memory SQLite (`inventory_client` fixture). They do **not** require Supabase. Limitation: Postgres-specific SQL is not covered.
+
+| ID | Type | Case | Why included |
+| --- | --- | --- | --- |
+| I1 | Happy | Seeded movements → correct `current_stock` | Stock invariant |
+| I2 | Happy | POST product → stock **0** | New catalogue items |
+| I3 | Failure | GET unknown id → 404 `"Supply not found."` | Missing supply |
+| I4 | Happy | Inbound delivery increases stock; `user_uuid` + `clinic_id` stored | Delivery write path |
+| I5 | Happy | Outbound consumption decreases stock | Consumption write path |
+| I6 | Failure | Quantity above available → **400** exact insufficient-stock message; row not persisted | Evaluator scenario |
+| I7 | Failure | Invalid `consumption_type` → validation error (M12-sanitized, no `input`) | Schema guard |
+| I8 | Happy | GET orders lists inbound + outbound with `user_uuid` | Unified order list |
+| I9 | Failure | Missing bearer → **401** | Auth required |
+| — | Failure | Duplicate SKU → **409** | Uniqueness |
+| — | Failure | Inbound unknown `supply_id` → 404 | FK existence |
+| — | Failure | Outbound at zero stock → insufficient-stock message | Empty catalogue |
+| — | Failure | Invalid category / clinic 13 / quantity 0 | Schema edges |
+| — | Failure | PATCH product stock → 404/405 | No direct stock mutation |
+
+```bash
+uv run --directory services/api pytest tests/test_inventory.py -v
+```
+
 ---
 
 ## Regression risks explicitly covered
@@ -490,6 +516,12 @@ See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full 
 - [x] `uis/talent-pipeline-tracker/__tests__/`
 - [x] ≥ 3 utility functions tested (happy + failure each)
 - [x] `npm run test:tracker` passes (**10** tests)
+
+### M5.5 — inventory API
+
+- [x] `tests/test_inventory.py` + SQLite `inventory_client` fixture in `conftest.py`
+- [x] Cases I1–I9 (happy / edge / failure per endpoint group)
+- [x] `uv run pytest` passes (includes inventory)
 
 ### AI workflow
 

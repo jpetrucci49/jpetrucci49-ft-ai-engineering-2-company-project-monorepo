@@ -11,6 +11,7 @@ FastAPI service for internal HealthCore Digital tools:
 | M9 | Password reset + change | `/forgot-password`, `/reset-password`, `/account/change-password` |
 | M11 | Incident manager (TinyDB lifecycle CRUD) | `/incidents/register`, `/incidents/manage`, `/incidents/summary` |
 | M12 | Error handling hardening | Field-specific validation messages, BFF error proxy, UI error states |
+| M5.5 | Medical supply inventory (SQLModel + Postgres/SQLite) | API only (`/inventory`) — no UI this milestone |
 
 ## Stack
 
@@ -18,26 +19,27 @@ FastAPI service for internal HealthCore Digital tools:
 | --- | --- |
 | Framework | FastAPI · Python 3.12+ · [uv](https://docs.astral.sh/uv/) |
 | Port | `8000` |
-| Storage | TinyDB — `suppliers.json`, `auth.json`, `incidents.json` (gitignored) |
+| Storage | TinyDB — `suppliers.json`, `auth.json`, `incidents.json` (gitignored); SQLModel — inventory tables on Postgres (Supabase) or local SQLite |
 | Auth | PyJWT (HS256) + libpass bcrypt |
+| Inventory ORM | SQLModel + `psycopg` (Postgres) or SQLite for local/CI |
 
 ## Quick start
 
 ```bash
 cd services/api
 uv sync
-cp .env.example .env          # set JWT_SECRET (required)
+cp .env.example .env          # set JWT_SECRET and SUPABASE_DATABASE_URL
 uv run seed                   # load 15 suppliers (idempotent)
 uv run --env-file .env uvicorn app.main:app --reload --port 8000
 ```
 
-Incident manager seed: [`scripts/README.md`](../../scripts/README.md#seed_incidentspy).
+Incident manager seed: [`scripts/README.md`](../../scripts/README.md#seed_incidentspy). Inventory seed: `uv run --env-file .env python seed_inventory.py` (register a user first).
 
 From the repo root: `npm run dev:api` (loads `services/api/.env`).
 
 OpenAPI docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-The API fails fast at startup if `JWT_SECRET` is missing, or if password-reset / email env vars are incomplete (see below).
+The API fails fast at startup if `JWT_SECRET` is missing, if password-reset / email env vars are incomplete (see below), or if `SUPABASE_DATABASE_URL` is missing (inventory schema).
 
 ## Authentication (M7)
 
@@ -181,6 +183,89 @@ All supplier routes require a bearer token. UI: `uis/backoffice/app/suppliers/`.
 
 Specs: `specs/06_SPECS_*.md`.
 
+## Medical supply inventory (M5.5)
+
+Spec: `specs/05.5_SPECS.md` · Context: `context/05.5_CONTEXT.md`
+
+Dual-database backend: **TinyDB remains the auth store**; inventory lives in **PostgreSQL via SQLModel** (Supabase in shared environments, SQLite for local/CI). Auth lookups never hit SQL; inventory queries never read TinyDB user tables. Every delivery and consumption stores `user_uuid` as `str(current_user.id)` from the JWT.
+
+`current_stock` is **computed**, never stored: `SUM(deliveries) − SUM(consumptions)` per supply, across all clinics. There is no endpoint that sets stock directly.
+
+### Environment
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `SUPABASE_DATABASE_URL` | **Yes** | psycopg3 URI (`postgresql+psycopg://…`), or `sqlite:///./inventory.db` for local development |
+
+```bash
+# Session pooler (IPv4). Copy from Dashboard → Connect → Session pooler, then use the psycopg3 dialect.
+SUPABASE_DATABASE_URL=postgresql+psycopg://postgres.<project-ref>:[password]@aws-0-[region].pooler.supabase.com:5432/postgres?sslmode=require
+
+# Local without Postgres
+# SUPABASE_DATABASE_URL=sqlite:///./inventory.db
+```
+
+`create_all()` runs at API startup for local/learning environments. Do **not** use it against a shared production database — use Alembic (or equivalent) in production.
+
+### Seed
+
+Register at least one TinyDB user first (`POST /users` or backoffice `/register`), then:
+
+```bash
+cd services/api
+uv run --env-file .env python seed_inventory.py
+# or:
+uv run --env-file .env seed-inventory
+
+# Dev reset (drops inventory tables, then re-seeds)
+# SQLite: allowed. Postgres: also set INVENTORY_ALLOW_RESET=1
+INVENTORY_ALLOW_RESET=1 uv run --env-file .env python seed_inventory.py --reset
+```
+
+From repo root: `uv run --directory services/api python seed_inventory.py`.
+
+Idempotent by SKU for catalogue rows. Movements are inserted only when the deliveries table is empty.
+
+Expected after a clean seed: six supplies; `HCR-PPE-001` stock **50**; `HCR-PPE-002` stock **16**; `HCR-WND-001` stock **15**; remaining SKUs **0**.
+
+**Reset:** `--reset` is allowed on SQLite. Against Postgres it requires `INVENTORY_ALLOW_RESET=1`. Prefer deleting `inventory.db` locally over dropping a shared Supabase database.
+
+### Endpoints
+
+All routes require `Authorization: Bearer <token>`. Paths use `products` / `orders`; entities remain `MedicalSupply`, `SupplyDelivery`, `SupplyConsumption`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/inventory/products` | List supplies with computed `current_stock` |
+| `POST` | `/inventory/products` | Register a supply (stock starts at 0) |
+| `GET` | `/inventory/products/{id}` | One supply + `current_stock` |
+| `POST` | `/inventory/orders/inbound` | Log a vendor delivery |
+| `POST` | `/inventory/orders/outbound` | Log clinical consumption (rejects negative stock) |
+| `GET` | `/inventory/orders` | List deliveries and consumptions with supply data |
+
+Insufficient stock → **400** with `Insufficient stock for supply '{name}'. Available: {available}, requested: {quantity}.` Duplicate SKU → **409**. Validation errors follow M12 (sanitized field messages; HTTP **400**).
+
+### Tests
+
+```bash
+cd services/api && uv run pytest tests/test_inventory.py -v
+```
+
+Tests use **in-memory SQLite** (no live Supabase in CI). Postgres-specific dialect behaviour is not exercised.
+
+```text
+Browser / curl
+    │  Bearer JWT
+    ▼
+FastAPI
+    ├── get_current_user ──► TinyDB (auth.json)
+    │         └── user.id → user_uuid on writes
+    └── get_db ──► SQLModel session ──► Postgres / SQLite
+              ├── MedicalSupply
+              ├── SupplyDelivery
+              └── SupplyConsumption
+```
+
 ## Incident analysis (M5)
 
 | Method | Path | Purpose |
@@ -250,7 +335,8 @@ From `services/api/`:
 
 ```bash
 uv sync --group dev
-uv run pytest                # 89 tests
+uv run pytest                # full suite (includes inventory)
+uv run pytest tests/test_inventory.py -v
 uv run pytest tests/test_validation_errors.py -v   # M12 field-labelled messages
 ```
 
@@ -277,11 +363,14 @@ services/api/
   auth/                 ← JWT module (M7) + password reset (M9)
   routes/               ← auth, users, profiles, suppliers
   app/incidents/        ← csv_validation, analysis (M5), manager (M11)
+  inventory/            ← SQLModel inventory (M5.5) — models, schemas, service, router
   incidents_database.py ← Incident manager TinyDB
   models.py             ← Supplier Pydantic models
   database.py           ← Supplier TinyDB
   seed.py               ← Supplier seeder
+  seed_inventory.py     ← Inventory seeder
   auth.json             ← Users + profiles (gitignored)
   suppliers.json        ← Suppliers (gitignored)
   incidents.json        ← Incidents (gitignored)
+  inventory.db          ← Local SQLite inventory (gitignored; optional)
 ```
