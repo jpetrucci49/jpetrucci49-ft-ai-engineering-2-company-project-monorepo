@@ -71,3 +71,8 @@ app.include_router(incidents_router, prefix="/api")
 app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)
 app.include_router(inventory_router)
+
+
+@app.get("/health", include_in_schema=False)
+def health() -> dict[str, str]:
+    return {"status": "ok"}

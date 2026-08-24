@@ -45,6 +45,7 @@
 9. **M8 frontend auth** — `localStorage` token; `packages/shared/auth/` + `authFetch`; BFF forwards `Authorization`; internal apps guard routes except `/login` and `/register`; website stays public.
 10. **M9 password recovery (API)** — Reset tokens in TinyDB; Resend transactional email; `PASSWORD_RESET_URL` + `RESEND_*` env vars; public forgot/reset routes; authenticated change-password.
 11. **M5.5 inventory** — SQLModel + psycopg3 (`postgresql+psycopg://` in `SUPABASE_DATABASE_URL`) on Postgres/SQLite; TinyDB auth unchanged; `user_uuid` copied from JWT; `current_stock` aggregated, never stored. FastAPI under `/inventory`. Backoffice UI at `/inventory/products` and `/inventory/orders*`; BFF `app/api/inventory/*` via `INVENTORY_API_URL` (default `http://127.0.0.1:8000`); client never calls `:8000`.
+12. **M13 Docker Compose** — `ui` (website + backoffice, `next dev`) and `api` (Uvicorn `--reload`) on network `healthcore`. Bind-mount source for hot reload; named volumes for `node_modules` and `.next` so host caches do not overlay the container. In Docker, BFF targets are `http://api:8000`; browser/`NEXT_PUBLIC_*`/CORS/`PASSWORD_RESET_URL` stay on `localhost`. Root `.env` feeds both services; native app `.env.example` files still use loopback.
 
 ## Technical constraints
 
@@ -77,6 +78,12 @@ cd services/api && uv sync && cp .env.example .env && uv run seed && uv run --en
 npm run dev:api
 uv run --directory services/api seed   # from repo root
 uv run --directory services/api python seed_inventory.py   # inventory (needs a TinyDB user)
+
+# Docker (website :3000, backoffice :3001, API :8000)
+cp .env.example .env
+docker compose up --build
+docker compose exec api python seed.py
+docker compose exec api python seed_inventory.py
 ```
 
 ## Path aliases (backoffice)
