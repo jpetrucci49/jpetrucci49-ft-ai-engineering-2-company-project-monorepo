@@ -237,7 +237,7 @@ Two services, bind mounts, named network, published ports.
 - `build.context: ./services`
 - volume: `./services/api` → `/app` (or whatever `WORKDIR` you chose) so `--reload` picks up Python edits
 - `env_file: .env`
-- healthcheck hitting a local URL **inside** the api container (e.g. `http://127.0.0.1:8000/docs` or `/openapi.json`). Slim images often lack `curl`; use `python -c` + `urllib`.
+- healthcheck hitting a local URL **inside** the api container (`GET /health`). Slim images often lack `curl`; use `python -c` + `urllib`. Do **not** probe `/openapi.json` — it regenerates the full schema on every check and floods access logs.
 
 Omit Compose `version:`. No credentials in `environment:` blocks.
 

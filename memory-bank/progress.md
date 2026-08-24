@@ -156,6 +156,7 @@ _Last updated: Milestone 13 — Docker Compose development environment_
 - [x] `services/Dockerfile` — Python 3.12 + uv, `requirements.txt`, Uvicorn `--reload` on `:8000`
 - [x] Root `docker-compose.yml` — services `ui` and `api` on network `healthcore`; BFF URLs `http://api:8000`
 - [x] Root `.env.example` (secrets stay in gitignored `.env`)
+- [x] `GET /health` for Compose probes (not `/openapi.json`)
 
 ## In progress
 

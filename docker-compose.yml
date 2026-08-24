@@ -14,12 +14,12 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json')",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
         ]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 25s
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
     networks:
       - healthcore
 
