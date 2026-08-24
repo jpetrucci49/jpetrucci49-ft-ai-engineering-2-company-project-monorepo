@@ -44,7 +44,7 @@
 8. **M7 authentication** — Users + profiles in TinyDB (`auth.json`); JWT bearer tokens (PyJWT HS256); libpass bcrypt; `JWT_SECRET` required via `services/api/.env`; supplier and incident routes require auth.
 9. **M8 frontend auth** — `localStorage` token; `packages/shared/auth/` + `authFetch`; BFF forwards `Authorization`; internal apps guard routes except `/login` and `/register`; website stays public.
 10. **M9 password recovery (API)** — Reset tokens in TinyDB; Resend transactional email; `PASSWORD_RESET_URL` + `RESEND_*` env vars; public forgot/reset routes; authenticated change-password.
-11. **M5.5 inventory** — SQLModel + psycopg3 (`postgresql+psycopg://` in `SUPABASE_DATABASE_URL`) on Postgres/SQLite; TinyDB auth unchanged; `user_uuid` copied from JWT; `current_stock` aggregated, never stored. Routes under `/inventory`.
+11. **M5.5 inventory** — SQLModel + psycopg3 (`postgresql+psycopg://` in `SUPABASE_DATABASE_URL`) on Postgres/SQLite; TinyDB auth unchanged; `user_uuid` copied from JWT; `current_stock` aggregated, never stored. FastAPI under `/inventory`. Backoffice UI at `/inventory/products` and `/inventory/orders*`; BFF `app/api/inventory/*` via `INVENTORY_API_URL` (default `http://127.0.0.1:8000`); client never calls `:8000`.
 
 ## Technical constraints
 

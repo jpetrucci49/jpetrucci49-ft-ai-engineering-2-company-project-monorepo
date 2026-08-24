@@ -73,6 +73,10 @@ See [`services/api/README.md`](services/api/README.md#password-recovery-and-chan
 | Register incident | http://localhost:3001/incidents/register | New incident form (M11) |
 | Incident summary | http://localhost:3001/incidents/summary | Totals by status, category, origin, branch (M11) |
 | Supplier directory | http://localhost:3001/suppliers | Browse and manage vendors (M6) |
+| Medical supplies | http://localhost:3001/inventory/products | Catalogue with current stock (M5.5) |
+| Vendor delivery | http://localhost:3001/inventory/orders/inbound | Log a shipment received at a clinic (M5.5) |
+| Clinical consumption | http://localhost:3001/inventory/orders/outbound | Log clinical use or expiry waste (M5.5) |
+| Supply movements | http://localhost:3001/inventory/orders | Read-only delivery and consumption history (M5.5) |
 | Talent pipeline tracker | http://localhost:3002 | Recruitment pipeline (M3) |
 | HealthCore API | http://localhost:8000 | FastAPI — auth, incidents, suppliers, inventory (M5–M11, M5.5) |
 | API docs | http://localhost:8000/docs | OpenAPI (Swagger) |

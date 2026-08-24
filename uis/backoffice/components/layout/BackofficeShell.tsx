@@ -12,6 +12,8 @@ const navItems = [
   { href: "/incidents/manage", label: "Incident list" },
   { href: "/incidents/summary", label: "Incident summary" },
   { href: "/suppliers", label: "Suppliers" },
+  { href: "/inventory/products", label: "Supplies" },
+  { href: "/inventory/orders", label: "Movements" },
   { href: crossAppNav.paths.backofficeUtilities, label: crossAppNavLabels.utilities },
   { href: "/account/profile", label: "Account" },
 ] as const;

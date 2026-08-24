@@ -11,7 +11,7 @@ FastAPI service for internal HealthCore Digital tools:
 | M9 | Password reset + change | `/forgot-password`, `/reset-password`, `/account/change-password` |
 | M11 | Incident manager (TinyDB lifecycle CRUD) | `/incidents/register`, `/incidents/manage`, `/incidents/summary` |
 | M12 | Error handling hardening | Field-specific validation messages, BFF error proxy, UI error states |
-| M5.5 | Medical supply inventory (SQLModel + Postgres/SQLite) | API only (`/inventory`) — no UI this milestone |
+| M5.5 | Medical supply inventory (SQLModel + Postgres/SQLite) | `/inventory/products`, `/inventory/orders`, `/inventory/orders/inbound`, `/inventory/orders/outbound` |
 
 ## Stack
 

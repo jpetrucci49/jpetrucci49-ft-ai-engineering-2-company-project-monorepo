@@ -21,6 +21,7 @@ export default function GlobalError({
           >
             Try again
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error replaces the root layout */}
           <a href="/" className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700">
             Return home
           </a>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxyAuthResponse, proxyToAuthApi, runAuthBffHandler } from "@/lib/api/auth-server";
+import { proxyAuthResponse, runAuthBffHandler } from "@/lib/api/auth-server";
 import { getFastApiOrigin } from "@healthcore/api/proxy";
 
 export async function POST(request: NextRequest) {
