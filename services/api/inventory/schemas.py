@@ -29,10 +29,12 @@ def _strip_required(value: object) -> object:
 
 
 class MedicalSupplyCreate(BaseModel):
-    name: str = Field(min_length=1)
-    sku: str = Field(min_length=1)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=200)
+    sku: str = Field(min_length=1, max_length=64)
     category: SupplyCategory
-    unit: str = Field(min_length=1)
+    unit: str = Field(min_length=1, max_length=32)
     country: SupplyCountry
 
     @field_validator("name", "sku", "unit", mode="before")
@@ -65,9 +67,11 @@ class MedicalSupplySummary(BaseModel):
 
 
 class SupplyDeliveryCreate(BaseModel):
-    supply_id: int
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    supply_id: int = Field(gt=0)
     quantity: int = Field(gt=0)
-    vendor_name: str = Field(min_length=1)
+    vendor_name: str = Field(min_length=1, max_length=200)
     clinic_id: int = Field(ge=CLINIC_ID_MIN, le=CLINIC_ID_MAX)
 
     @field_validator("vendor_name", mode="before")
@@ -90,7 +94,9 @@ class SupplyDeliveryResponse(BaseModel):
 
 
 class SupplyConsumptionCreate(BaseModel):
-    supply_id: int
+    model_config = ConfigDict(extra="forbid")
+
+    supply_id: int = Field(gt=0)
     quantity: int = Field(gt=0)
     consumption_type: ConsumptionType
     clinic_id: int = Field(ge=CLINIC_ID_MIN, le=CLINIC_ID_MAX)

@@ -52,8 +52,11 @@ def _to_supply_response(supply: MedicalSupply, stock: int) -> MedicalSupplyRespo
     )
 
 
-def get_supply_or_raise(session: Session, supply_id: int) -> MedicalSupply:
-    supply = session.get(MedicalSupply, supply_id)
+def get_supply_or_raise(session: Session, supply_id: int, *, for_update: bool = False) -> MedicalSupply:
+    statement = select(MedicalSupply).where(MedicalSupply.id == supply_id)
+    if for_update:
+        statement = statement.with_for_update()
+    supply = session.exec(statement).first()
     if supply is None:
         raise SupplyNotFoundError(supply_id)
     return supply
@@ -133,7 +136,7 @@ def register_delivery(
     payload: SupplyDeliveryCreate,
     user_uuid: str,
 ) -> SupplyDeliveryResponse:
-    supply = get_supply_or_raise(session, payload.supply_id)
+    supply = get_supply_or_raise(session, payload.supply_id, for_update=True)
     delivery = SupplyDelivery(
         supply_id=payload.supply_id,
         quantity=payload.quantity,
@@ -143,7 +146,10 @@ def register_delivery(
         user_uuid=user_uuid,
     )
     session.add(delivery)
-    session.flush()
+    try:
+        session.flush()
+    except IntegrityError as exc:
+        raise SupplyNotFoundError(payload.supply_id) from exc
     return SupplyDeliveryResponse(
         id=_require_id(delivery.id),
         supply_id=delivery.supply_id,
@@ -161,7 +167,7 @@ def register_consumption(
     payload: SupplyConsumptionCreate,
     user_uuid: str,
 ) -> SupplyConsumptionResponse:
-    supply = get_supply_or_raise(session, payload.supply_id)
+    supply = get_supply_or_raise(session, payload.supply_id, for_update=True)
     available = compute_current_stock(session, payload.supply_id)
     if payload.quantity > available:
         raise InsufficientStockError(supply.name, available, payload.quantity)
@@ -175,7 +181,10 @@ def register_consumption(
         user_uuid=user_uuid,
     )
     session.add(consumption)
-    session.flush()
+    try:
+        session.flush()
+    except IntegrityError as exc:
+        raise SupplyNotFoundError(payload.supply_id) from exc
     return SupplyConsumptionResponse(
         id=_require_id(consumption.id),
         supply_id=consumption.supply_id,

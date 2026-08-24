@@ -218,7 +218,8 @@ uv run --env-file .env python seed_inventory.py
 uv run --env-file .env seed-inventory
 
 # Dev reset (drops inventory tables, then re-seeds)
-uv run --env-file .env python seed_inventory.py --reset
+# SQLite: allowed. Postgres: also set INVENTORY_ALLOW_RESET=1
+INVENTORY_ALLOW_RESET=1 uv run --env-file .env python seed_inventory.py --reset
 ```
 
 From repo root: `uv run --directory services/api python seed_inventory.py`.
@@ -227,7 +228,7 @@ Idempotent by SKU for catalogue rows. Movements are inserted only when the deliv
 
 Expected after a clean seed: six supplies; `HCR-PPE-001` stock **50**; `HCR-PPE-002` stock **16**; `HCR-WND-001` stock **15**; remaining SKUs **0**.
 
-**Reset:** `--reset` (dev only) or delete the local SQLite file (`rm -f inventory.db`) and re-run the seeder. Do not drop a shared Supabase database casually.
+**Reset:** `--reset` is allowed on SQLite. Against Postgres it requires `INVENTORY_ALLOW_RESET=1`. Prefer deleting `inventory.db` locally over dropping a shared Supabase database.
 
 ### Endpoints
 

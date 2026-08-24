@@ -4,7 +4,7 @@
 Idempotent by SKU for supplies. Movements are inserted only when the deliveries
 table is empty, so re-running does not double-count stock.
 
-Reset (dev only):
+Reset (dev only; Postgres requires INVENTORY_ALLOW_RESET=1):
     uv run --env-file .env python seed_inventory.py --reset
 """
 
@@ -17,7 +17,14 @@ from sqlmodel import Session, select
 
 from auth.database import get_users_table
 from inventory.constants import ConsumptionType, SupplyCategory, SupplyCountry
-from inventory.database import connection_error_hint, get_engine, init_inventory_schema, load_local_env
+from inventory.database import (
+    assert_destructive_reset_allowed,
+    connection_error_hint,
+    get_engine,
+    init_inventory_schema,
+    load_local_env,
+    redact_secrets,
+)
 from inventory.models import MedicalSupply, SupplyConsumption, SupplyDelivery
 from inventory.schemas import MedicalSupplyCreate, SupplyConsumptionCreate, SupplyDeliveryCreate
 from inventory.service import (
@@ -130,6 +137,7 @@ def _reset_tables() -> None:
 
     import inventory.models  # noqa: F401
 
+    assert_destructive_reset_allowed()
     engine = get_engine()
     SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
@@ -165,7 +173,9 @@ def run_seed(*, reset: bool) -> int:
 
         if existing_deliveries is None:
             for entry in DELIVERIES_SEED:
-                supply_id = sku_ids[entry["sku"]]
+                supply_id = sku_ids.get(entry["sku"])
+                if supply_id is None:
+                    raise RuntimeError(f"Seed SKU '{entry['sku']}' was not found after catalogue insert.")
                 register_delivery(
                     session,
                     SupplyDeliveryCreate(
@@ -179,7 +189,9 @@ def run_seed(*, reset: bool) -> int:
                 inserted_deliveries += 1
 
             for entry in CONSUMPTIONS_SEED:
-                supply_id = sku_ids[entry["sku"]]
+                supply_id = sku_ids.get(entry["sku"])
+                if supply_id is None:
+                    raise RuntimeError(f"Seed SKU '{entry['sku']}' was not found after catalogue insert.")
                 register_consumption(
                     session,
                     SupplyConsumptionCreate(
@@ -220,7 +232,7 @@ def main() -> int:
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Drop and recreate inventory tables (development only).",
+        help="Drop and recreate inventory tables (dev only; Postgres requires INVENTORY_ALLOW_RESET=1).",
     )
     args = parser.parse_args()
 
@@ -228,11 +240,11 @@ def main() -> int:
     try:
         return run_seed(reset=args.reset)
     except RuntimeError as exc:
-        print(f"Inventory seeder failed: {exc}", file=sys.stderr)
+        print(f"Inventory seeder failed: {redact_secrets(str(exc))}", file=sys.stderr)
         return 1
     except Exception as exc:
         print(
-            f"Inventory seeder failed ({type(exc).__name__}): {exc}",
+            f"Inventory seeder failed ({type(exc).__name__}): {redact_secrets(str(exc))}",
             file=sys.stderr,
         )
         hint = connection_error_hint(exc)

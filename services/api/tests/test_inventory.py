@@ -337,3 +337,53 @@ def test_no_direct_stock_mutation_endpoint(inventory_client, inventory_auth_head
         headers=inventory_auth_headers,
     )
     assert response.status_code in (404, 405)
+
+
+def test_create_rejects_current_stock_in_body():
+    with pytest.raises(ValidationError):
+        MedicalSupplyCreate(**GLOVES, current_stock=999)  # type: ignore[arg-type]
+
+
+def test_post_product_rejects_unknown_field(inventory_client, inventory_auth_headers):
+    response = inventory_client.post(
+        "/inventory/products",
+        json={**GLOVES, "current_stock": 999},
+        headers=inventory_auth_headers,
+    )
+    assert response.status_code in (400, 422)
+
+
+def test_unauthenticated_inbound_returns_401(inventory_client):
+    response = inventory_client.post(
+        "/inventory/orders/inbound",
+        json={
+            "supply_id": 1,
+            "quantity": 1,
+            "vendor_name": "MedLine Industries",
+            "clinic_id": 1,
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_redact_secrets_strips_connection_uris():
+    from inventory.database import redact_secrets
+
+    leaked = (
+        "failed: postgresql+psycopg://postgres.abc:s3cret@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
+    )
+    redacted = redact_secrets(leaked)
+    assert "s3cret" not in redacted
+    assert "postgresql+psycopg://***" in redacted
+
+
+def test_postgres_reset_blocked_without_flag(monkeypatch):
+    from inventory.database import assert_destructive_reset_allowed
+
+    monkeypatch.setenv(
+        "SUPABASE_DATABASE_URL",
+        "postgresql+psycopg://postgres.demo:x@aws-0-us-west-2.pooler.supabase.com:5432/postgres",
+    )
+    monkeypatch.delenv("INVENTORY_ALLOW_RESET", raising=False)
+    with pytest.raises(RuntimeError, match="INVENTORY_ALLOW_RESET"):
+        assert_destructive_reset_allowed()

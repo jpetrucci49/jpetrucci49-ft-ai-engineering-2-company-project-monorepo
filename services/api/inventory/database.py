@@ -7,6 +7,7 @@ Auth remains on TinyDB. This module is the only inventory connection to Supabase
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Generator
 from pathlib import Path
 
@@ -67,6 +68,15 @@ def _ensure_sslmode(url: str) -> str:
         return url
     separator = "&" if "?" in url else "?"
     return f"{url}{separator}sslmode=require"
+
+
+_CREDENTIAL_URL = re.compile(r"(?:postgres(?:ql)?(?:\+[\w]+)?://)[^\s\"']+", re.IGNORECASE)
+
+
+def redact_secrets(text: str) -> str:
+    """Strip connection URIs and password query params from operator-facing errors."""
+    redacted = _CREDENTIAL_URL.sub("postgresql+psycopg://***", text)
+    return re.sub(r"(?i)password=[^&\s]+", "password=***", redacted)
 
 
 def connection_error_hint(exc: BaseException) -> str | None:
@@ -178,3 +188,17 @@ def init_inventory_schema() -> None:
         return
 
     SQLModel.metadata.create_all(get_engine())
+
+
+def assert_destructive_reset_allowed() -> None:
+    """Block accidental drop_all against a shared Postgres database."""
+    url = get_database_url()
+    if url.startswith("sqlite"):
+        return
+    flag = os.getenv("INVENTORY_ALLOW_RESET", "").strip().lower()
+    if flag in {"1", "true", "yes"}:
+        return
+    raise RuntimeError(
+        "--reset is blocked against Postgres. Re-run with INVENTORY_ALLOW_RESET=1 "
+        "if you intend to drop inventory tables."
+    )
