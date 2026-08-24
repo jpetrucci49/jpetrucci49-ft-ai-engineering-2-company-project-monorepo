@@ -1,0 +1,59 @@
+services:
+  api:
+    build:
+      context: ./services
+    volumes:
+      - ./services/api:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+    networks:
+      - healthcore
+
+  ui:
+    build:
+      context: ./uis
+    volumes:
+      - ./uis/website:/app/website
+      - ./uis/backoffice:/app/backoffice
+      - ./packages:/packages
+      - ./src:/src
+      - ./tests/utils:/tests/utils
+      - website_node_modules:/app/website/node_modules
+      - backoffice_node_modules:/app/backoffice/node_modules
+      - website_next:/app/website/.next
+      - backoffice_next:/app/backoffice/.next
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - healthcore
+
+volumes:
+  website_node_modules:
+  backoffice_node_modules:
+  website_next:
+  backoffice_next:
+
+networks:
+  healthcore:
+    name: healthcore
+    driver: bridge

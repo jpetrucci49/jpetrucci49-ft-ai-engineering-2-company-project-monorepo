@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 5.5 complete — Medical supply inventory API + backoffice UI_
+_Last updated: Milestone 13 — Docker Compose development environment_
 
 ## Completed
 
@@ -148,6 +148,14 @@ _Last updated: Milestone 5.5 complete — Medical supply inventory API + backoff
 - [x] Backoffice UI (`specs/05.5_SPECS_FRONT.md`) — catalogue, vendor delivery, clinical consumption, supply movements
 - [x] BFF at `app/api/inventory/*` via `INVENTORY_API_URL`; client helpers in `lib/api/inventory.ts` (`authFetch` only)
 - [x] Nav: **Supplies** (`/inventory/products`), **Movements** (`/inventory/orders`)
+
+### Milestone 13 — Docker Compose
+
+- [x] Spec: `specs/13_SPECS.md`
+- [x] `uis/Dockerfile` + `uis/start.sh` — website `:3000` and backoffice `:3001` (`next dev`, hot reload)
+- [x] `services/Dockerfile` — Python 3.12 + uv, `requirements.txt`, Uvicorn `--reload` on `:8000`
+- [x] Root `docker-compose.yml` — services `ui` and `api` on network `healthcore`; BFF URLs `http://api:8000`
+- [x] Root `.env.example` (secrets stay in gitignored `.env`)
 
 ## In progress
 

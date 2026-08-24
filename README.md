@@ -10,6 +10,28 @@ HealthCore project workspace containing:
 
 ## Quick start
 
+### Docker (recommended for a new clone)
+
+```bash
+cp .env.example .env          # one-time; see notes below
+docker compose up --build
+```
+
+Then open http://localhost:3000 (website), http://localhost:3001 (backoffice), and http://localhost:8000/docs (API).
+
+Root `.env` is gitignored. Placeholders in `.env.example` are enough to boot. Optional: copy `JWT_SECRET`, `RESEND_*`, and `SUPABASE_DATABASE_URL` from `services/api/.env` if you want Docker to share your existing API secrets and inventory database. BFF URLs in root `.env` must stay `http://api:8000` (Compose service name), not `localhost`.
+
+Stop with Ctrl+C or `docker compose down`. Ports **3000**, **3001**, and **8000** cannot be used by native `npm run dev` at the same time.
+
+Seed inside the API container (optional):
+
+```bash
+docker compose exec api python seed.py
+docker compose exec api python seed_inventory.py
+```
+
+### Native (no Docker)
+
 ```bash
 npm install
 cd services/api && uv sync && cp .env.example .env && uv run seed && cd ../..
