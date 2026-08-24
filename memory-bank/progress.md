@@ -105,10 +105,10 @@ _Last updated: Milestone 11 complete — Centralized Incident Manager_
 ### Milestone 10 — Authentication API unit tests (AUTH-088)
 
 - [x] Spec: `specs/10_SPECS.md`; test plan: `TESTING.md`
-- [x] `services/api/tests/` — pytest suite (67 tests) with isolated TinyDB fixtures
+- [x] `services/api/tests/` — pytest suite (**89** tests) with isolated TinyDB fixtures
 - [x] Coverage **91%** on `auth/` (`uv run pytest --cov=auth`)
 - [x] Jest config (`jest.config.mjs`) + tests in `packages/shared/auth/__tests__/`
-- [x] `npm run test:auth` — 8 Jest tests for errors, token, cross-app helpers
+- [x] `npm run test:auth` — **10** Jest tests for errors, token, cross-app helpers
 
 ### Milestone 10 Extra — API-042 + FE-019
 
@@ -125,6 +125,17 @@ _Last updated: Milestone 11 complete — Centralized Incident Manager_
 - [x] `csv_validation.py` extracted; `scripts/seed_incidents.py` (94 valid rows, idempotent)
 - [x] `packages/shared/incidents/` — constants, labels, lifecycle helpers
 - [x] Backoffice: register, list (filters + status updates), summary pages + BFF
+
+### Milestone 12 — Error handling hardening
+
+- [x] Spec: `specs/12_SPECS.md` (audit-driven remediation)
+- [x] FastAPI: sanitized validation errors; password-reset delivery rollback; safe route error messages
+- [x] Shared `packages/shared/api/errors.ts` — `sanitizeApiDetail`, `toUserFacingMessage`
+- [x] BFF routes (23): scoped `runBffHandler`, sanitized proxy responses
+- [x] Frontend: `ErrorState` component, retry/home CTAs, `error.tsx` / `global-error.tsx` in internal apps
+- [x] API client libs: network/JSON try/catch wrappers
+- [x] Scripts: `seed_incidents.py`, `analyze.py` — defensive I/O with `sys.exit(1)`
+- [x] Docs: READMEs, `TESTING.md`, `scripts/README.md` — M12 paths, exit codes, validation behaviour
 
 ## In progress
 

@@ -1,4 +1,5 @@
-import { authFetch } from "@healthcore/auth";
+import { authFetch, humanizeValidationMessage } from "@healthcore/auth";
+import type { ApiValidationError } from "@healthcore/auth";
 import {
   Supplier,
   SupplierCreatePayload,
@@ -9,14 +10,16 @@ import {
 } from "@/types/suppliers";
 
 const API_PREFIX = "/api/suppliers";
+const NETWORK_ERROR = "Unable to reach the server. Check your connection and try again.";
+const INVALID_RESPONSE = "Received an invalid response from the server.";
 
 async function parseErrorMessage(response: Response): Promise<string> {
   try {
     const payload = (await response.json()) as { detail?: unknown };
     if (typeof payload.detail === "string") return payload.detail;
     if (Array.isArray(payload.detail) && payload.detail.length > 0) {
-      const first = payload.detail[0] as { msg?: string };
-      if (first.msg) return first.msg;
+      const first = payload.detail[0] as ApiValidationError;
+      if (first.msg) return humanizeValidationMessage(first);
     }
   } catch {
     // Fall through to status text.
@@ -32,66 +35,58 @@ function buildQuery(filters?: SupplierListFilters): string {
   return query ? `?${query}` : "";
 }
 
-export async function fetchSuppliers(filters?: SupplierListFilters): Promise<Supplier[]> {
-  const response = await authFetch(`${API_PREFIX}${buildQuery(filters)}`);
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await authFetch(url, init);
+  } catch {
+    throw new SuppliersApiError(NETWORK_ERROR, 0);
+  }
 
   if (!response.ok) {
     const message = await parseErrorMessage(response);
     throw new SuppliersApiError(message, response.status);
   }
 
-  return (await response.json()) as Supplier[];
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new SuppliersApiError(INVALID_RESPONSE, response.status);
+  }
+}
+
+export async function fetchSuppliers(filters?: SupplierListFilters): Promise<Supplier[]> {
+  return requestJson<Supplier[]>(`${API_PREFIX}${buildQuery(filters)}`);
 }
 
 export async function createSupplier(payload: SupplierCreatePayload): Promise<Supplier> {
-  const response = await authFetch(API_PREFIX, {
+  return requestJson<Supplier>(API_PREFIX, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
-  if (!response.ok) {
-    const message = await parseErrorMessage(response);
-    throw new SuppliersApiError(message, response.status);
-  }
-
-  return (await response.json()) as Supplier;
 }
 
 export async function updateSupplierRate(
   id: number,
   payload: SupplierRateUpdatePayload
 ): Promise<Supplier> {
-  const response = await authFetch(`${API_PREFIX}/${id}/rate`, {
+  return requestJson<Supplier>(`${API_PREFIX}/${id}/rate`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
-  if (!response.ok) {
-    const message = await parseErrorMessage(response);
-    throw new SuppliersApiError(message, response.status);
-  }
-
-  return (await response.json()) as Supplier;
 }
 
 export async function updateSupplierStatus(
   id: number,
   payload: SupplierStatusUpdatePayload
 ): Promise<Supplier> {
-  const response = await authFetch(`${API_PREFIX}/${id}/status`, {
+  return requestJson<Supplier>(`${API_PREFIX}/${id}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
-  if (!response.ok) {
-    const message = await parseErrorMessage(response);
-    throw new SuppliersApiError(message, response.status);
-  }
-
-  return (await response.json()) as Supplier;
 }
 
 export function formatRate(rate: number, currency: string): string {

@@ -1,13 +1,10 @@
 import { NextRequest } from "next/server";
 
-import {
-  authApiUnavailableResponse,
-  proxyAuthResponse,
-} from "@/lib/api/auth-server";
+import { proxyAuthResponse, runAuthBffHandler } from "@/lib/api/auth-server";
 import { getFastApiOrigin } from "@healthcore/api/proxy";
 
 export async function POST(request: NextRequest) {
-  try {
+  return runAuthBffHandler(async () => {
     const body = await request.text();
     const response = await fetch(`${getFastApiOrigin()}/users`, {
       method: "POST",
@@ -16,7 +13,5 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     });
     return proxyAuthResponse(response);
-  } catch {
-    return authApiUnavailableResponse();
-  }
+  });
 }

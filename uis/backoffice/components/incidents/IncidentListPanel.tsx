@@ -29,6 +29,7 @@ import {
 import { getAllowedNextStatuses } from "@healthcore/incidents/lifecycle";
 
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 function readFilters(searchParams: URLSearchParams): IncidentListFilters {
   const filters: IncidentListFilters = {};
@@ -326,16 +327,7 @@ export function IncidentListPanel() {
       {isLoading ? <LoadingState label="Loading incidents…" /> : null}
 
       {error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-          <p>{error}</p>
-          <button
-            type="button"
-            className="mt-2 underline"
-            onClick={() => void loadIncidents(filters)}
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState message={error} onRetry={() => void loadIncidents(filters)} homeHref="/" />
       ) : null}
 
       {!isLoading && !error && incidents.length === 0 ? (

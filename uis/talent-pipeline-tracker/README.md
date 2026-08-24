@@ -36,3 +36,7 @@ npm run dev
 Same auth routes as backoffice: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/account/profile`, `/account/change-password`.
 
 For reset emails to open this app, set `PASSWORD_RESET_URL=http://localhost:3002/reset-password` in `services/api/.env`. Testing steps: root [`README.md`](../../README.md#testing-password-recovery-and-change-m9).
+
+## Error handling (M12)
+
+Same BFF pattern as backoffice: `lib/api/bff-proxy.ts` sanitizes upstream validation errors and maps network failures to **502**. `components/ui/ErrorState.tsx`, `app/error.tsx`, and `app/global-error.tsx` show safe messages with retry/home actions on candidate list and detail pages.

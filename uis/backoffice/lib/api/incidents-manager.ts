@@ -7,6 +7,8 @@ import type {
 import type { IncidentStatus } from "@healthcore/incidents/constants";
 
 const API_PREFIX = "/api/incidents";
+const NETWORK_ERROR = "Unable to reach the server. Check your connection and try again.";
+const INVALID_RESPONSE = "Received an invalid response from the server.";
 
 export class IncidentsManagerApiError extends Error {
   constructor(
@@ -32,6 +34,25 @@ async function parseManagerError(response: Response): Promise<IncidentsManagerAp
   return new IncidentsManagerApiError(message, response.status, fieldErrors);
 }
 
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await authFetch(url, init);
+  } catch {
+    throw new IncidentsManagerApiError(NETWORK_ERROR, 0);
+  }
+
+  if (!response.ok) {
+    throw await parseManagerError(response);
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new IncidentsManagerApiError(INVALID_RESPONSE, response.status);
+  }
+}
+
 export async function fetchManagedIncidents(filters: IncidentListFilters = {}): Promise<IncidentRecord[]> {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
@@ -40,52 +61,28 @@ export async function fetchManagedIncidents(filters: IncidentListFilters = {}): 
   if (filters.category) params.set("category", filters.category);
 
   const query = params.toString();
-  const response = await authFetch(query ? `${API_PREFIX}?${query}` : API_PREFIX);
-
-  if (!response.ok) {
-    throw await parseManagerError(response);
-  }
-
-  return (await response.json()) as IncidentRecord[];
+  return requestJson<IncidentRecord[]>(query ? `${API_PREFIX}?${query}` : API_PREFIX);
 }
 
 export async function createManagedIncident(payload: IncidentCreateInput): Promise<IncidentRecord> {
-  const response = await authFetch(API_PREFIX, {
+  return requestJson<IncidentRecord>(API_PREFIX, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...payload, status: payload.status ?? "open" }),
   });
-
-  if (!response.ok) {
-    throw await parseManagerError(response);
-  }
-
-  return (await response.json()) as IncidentRecord;
 }
 
 export async function updateManagedIncidentStatus(
   id: number,
   status: IncidentStatus
 ): Promise<IncidentRecord> {
-  const response = await authFetch(`${API_PREFIX}/${id}/status`, {
+  return requestJson<IncidentRecord>(`${API_PREFIX}/${id}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
-
-  if (!response.ok) {
-    throw await parseManagerError(response);
-  }
-
-  return (await response.json()) as IncidentRecord;
 }
 
 export async function fetchIncidentSummary(): Promise<IncidentSummary> {
-  const response = await authFetch(`${API_PREFIX}/summary`);
-
-  if (!response.ok) {
-    throw await parseManagerError(response);
-  }
-
-  return (await response.json()) as IncidentSummary;
+  return requestJson<IncidentSummary>(`${API_PREFIX}/summary`);
 }

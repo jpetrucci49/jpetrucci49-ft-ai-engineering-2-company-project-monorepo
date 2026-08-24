@@ -45,15 +45,58 @@ uv add <package-name>
 
 HealthCore patient incident CSV analysis CLI. Shares business rules with `services/api/app/incidents/analysis.py` and the M5 upload API.
 
-**Requirements:** root `uv sync` (pandas only).
+**Requirements:** Python 3.12+ with **pandas**. Use either environment below.
+
+#### Run from repo root (root `uv` env)
 
 ```bash
+uv sync
 uv run python scripts/analyze.py scripts/incidents.csv
 ```
 
-Optional: pass a different CSV path as the first argument.
+#### Run with the API virtualenv (imports shared `app.incidents` modules)
 
-Expected for `scripts/incidents.csv`: 100 total records, 94 valid, 6 invalid, average satisfaction 3.58.
+When using `uv run --directory services/api`, paths are relative to `services/api/` — use **`../../scripts/`**:
+
+```bash
+# from repo root
+uv run --directory services/api python ../../scripts/analyze.py ../../scripts/incidents.csv
+```
+
+```bash
+# from services/api/
+uv run python ../../scripts/analyze.py ../../scripts/incidents.csv
+```
+
+Optional: pass a different CSV path as the only argument.
+
+**Expected for `scripts/incidents.csv`:** 100 total records, 94 valid, 6 invalid, average satisfaction 3.58.
+
+#### Exit codes and errors
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success |
+| `1` | Script ran but failed (wrong args, missing file, parse/analysis/write error) — message on **stderr** |
+| `2` | Python could not start the script (wrong file path — e.g. `scripts/analyze.py` without `../../` when cwd is `services/api/`) |
+
+Smoke tests:
+
+```bash
+# Wrong args → exit 1
+uv run python scripts/analyze.py
+echo $?   # 1
+
+# Missing file → exit 1
+uv run python scripts/analyze.py /nonexistent.csv
+echo $?   # 1
+
+# Happy path → exit 0 (prompts to export CSV)
+uv run python scripts/analyze.py scripts/incidents.csv
+echo $?   # 0
+```
+
+When using `--directory services/api`, prefix script and CSV paths with `../../scripts/` (see above).
 
 ---
 
@@ -80,6 +123,8 @@ uv run --directory services/api python ../../scripts/seed_incidents.py /path/to/
 | --- | --- |
 | First run | `inserted: 94`, `rejected: 6` |
 | Later runs | `inserted: 0`, `skipped (duplicate): 94`, `rejected: 6` |
+
+On failure (missing CSV, parse error, DB error), the script prints a short message to **stderr** and exits with code **`1`** (not `0`).
 
 **Reset database:** from `services/api/`, delete `incidents.json` and run the seeder again. Override the TinyDB path with `INCIDENTS_DB_PATH` in `services/api/.env`.
 

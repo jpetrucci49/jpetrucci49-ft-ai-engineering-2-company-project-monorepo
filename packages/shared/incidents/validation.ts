@@ -36,13 +36,13 @@ export function validateIncidentForm(values: IncidentCreateInput): IncidentFormE
   const errors: IncidentFormErrors = {};
 
   if (!values.title.trim()) {
-    errors.title = "Title is required.";
+    errors.title = "Title should have at least 1 character.";
   } else if (values.title.trim().length > 120) {
-    errors.title = "Title must be 120 characters or fewer.";
+    errors.title = "Title should have at most 120 characters.";
   }
 
   if (!values.description.trim()) {
-    errors.description = "Description is required.";
+    errors.description = "Description should have at least 1 character.";
   }
 
   if (!values.category) {

@@ -8,12 +8,12 @@ import { analyzeIncidents, downloadBlob, exportIncidentResults } from "@/lib/api
 import { IncidentsApiError, type AnalysisResult } from "@/types/incidents";
 
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof IncidentsApiError || error instanceof Error) {
-    return error.message;
-  }
-  return fallback;
+  const status = error instanceof IncidentsApiError ? error.status : undefined;
+  return toUserFacingMessage(error, fallback, status);
 }
 
 export function IncidentAnalysisPage() {
@@ -74,11 +74,16 @@ export function IncidentAnalysisPage() {
 
       {isUploading ? <LoadingState label="Analyzing uploaded file…" layout="inline" /> : null}
 
-      {uploadError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-          {uploadError}
-        </div>
-      )}
+      {uploadError ? (
+        <ErrorState
+          message={uploadError}
+          onRetry={() => {
+            setUploadError(null);
+            setResult(null);
+          }}
+          retryLabel="Try another upload"
+        />
+      ) : null}
 
       {!result && !isUploading && !uploadError && (
         <p className="text-sm text-slate-500">
@@ -99,14 +104,9 @@ export function IncidentAnalysisPage() {
             </button>
           </div>
 
-          {downloadError && (
-            <div
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-              role="alert"
-            >
-              {downloadError}
-            </div>
-          )}
+          {downloadError ? (
+            <ErrorState message={downloadError} onRetry={() => void handleDownload()} retryLabel="Retry download" />
+          ) : null}
 
           <IncidentResultsSummary result={result} />
         </>

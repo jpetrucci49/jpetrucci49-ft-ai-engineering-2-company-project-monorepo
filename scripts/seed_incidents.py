@@ -108,37 +108,50 @@ def main() -> int:
         print(f"CSV not found: {csv_path}", file=sys.stderr)
         return 1
 
-    content = csv_path.read_bytes()
-    df = load_incidents_from_bytes(content)
+    try:
+        content = csv_path.read_bytes()
+    except OSError:
+        print("Unable to read CSV file.", file=sys.stderr)
+        return 1
+
+    try:
+        df = load_incidents_from_bytes(content)
+    except ValueError:
+        print("Unable to parse CSV file. Ensure UTF-8 encoding and comma separator.", file=sys.stderr)
+        return 1
 
     inserted = 0
     skipped_duplicate = 0
     rejected = 0
 
-    for _, row in df.iterrows():
-        if validate_record(row):
-            rejected += 1
-            continue
+    try:
+        for _, row in df.iterrows():
+            if validate_record(row):
+                rejected += 1
+                continue
 
-        payload = _transform_row(row)
-        if payload is None:
-            rejected += 1
-            continue
+            payload = _transform_row(row)
+            if payload is None:
+                rejected += 1
+                continue
 
-        date_value = text_value(row.get("date"))
-        try:
-            created_at = _parse_created_at(date_value)
-        except ValueError:
-            rejected += 1
-            continue
+            date_value = text_value(row.get("date"))
+            try:
+                created_at = _parse_created_at(date_value)
+            except ValueError:
+                rejected += 1
+                continue
 
-        seed_key = _build_seed_key(row, payload.title, created_at)
-        if seed_key_exists(seed_key):
-            skipped_duplicate += 1
-            continue
+            seed_key = _build_seed_key(row, payload.title, created_at)
+            if seed_key_exists(seed_key):
+                skipped_duplicate += 1
+                continue
 
-        create_incident(payload, seed_key=seed_key, created_at=created_at)
-        inserted += 1
+            create_incident(payload, seed_key=seed_key, created_at=created_at)
+            inserted += 1
+    except Exception:
+        print("Seeding failed while writing incidents.", file=sys.stderr)
+        return 1
 
     print(f"Seed complete — inserted: {inserted}, skipped (duplicate): {skipped_duplicate}, rejected: {rejected}")
     return 0

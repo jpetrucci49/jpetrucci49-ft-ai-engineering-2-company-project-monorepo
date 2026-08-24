@@ -3,13 +3,13 @@ import { NextRequest } from "next/server";
 import {
   proxySuppliersResponse,
   proxyToSuppliersApi,
-  suppliersApiUnavailableResponse,
+  runSuppliersBffHandler,
 } from "@/lib/api/suppliers-server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  try {
+  return runSuppliersBffHandler(async () => {
     const { id } = await context.params;
     const body = await request.text();
     const response = await proxyToSuppliersApi(request, `/suppliers/${id}/rate`, {
@@ -18,7 +18,5 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       body,
     });
     return proxySuppliersResponse(response);
-  } catch {
-    return suppliersApiUnavailableResponse();
-  }
+  });
 }

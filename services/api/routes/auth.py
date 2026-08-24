@@ -64,7 +64,11 @@ def read_current_user(
 
 @router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(payload: ForgotPasswordRequest) -> MessageResponse:
-    password_reset_service.request_password_reset(payload.email)
+    try:
+        password_reset_service.request_password_reset(payload.email)
+    except password_reset_service.PasswordResetDeliveryError:
+        # Logged in service; same response avoids email enumeration.
+        pass
     return MessageResponse(message=password_reset_service.FORGOT_PASSWORD_MESSAGE)
 
 
@@ -72,11 +76,11 @@ def forgot_password(payload: ForgotPasswordRequest) -> MessageResponse:
 def reset_password(payload: ResetPasswordRequest) -> MessageResponse:
     try:
         password_reset_service.reset_password(payload.token, payload.new_password)
-    except password_reset_service.InvalidResetTokenError as exc:
+    except password_reset_service.InvalidResetTokenError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc
+            detail=password_reset_service.INVALID_RESET_TOKEN_MESSAGE,
+        ) from None
     return MessageResponse(message=password_reset_service.RESET_SUCCESS_MESSAGE)
 
 
@@ -92,8 +96,15 @@ def change_password(
             payload.new_password,
         )
     except ValueError as exc:
+        message = str(exc)
+        if message == "Current password is incorrect.":
+            detail = message
+        elif message == "New password must be different from the current password.":
+            detail = message
+        else:
+            detail = "Unable to change password."
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            detail=detail,
         ) from exc
     return ChangePasswordResponse(message=CHANGE_PASSWORD_SUCCESS_MESSAGE)

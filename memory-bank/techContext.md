@@ -64,9 +64,12 @@ npm test
 npm run build        # all Next.js apps
 npm run lint:apps
 
-# Python scripts (M5)
+# Python scripts (M5) — from repo root
 uv sync
 uv run python scripts/analyze.py scripts/incidents.csv
+
+# Same script via API venv (paths relative to services/api/)
+uv run --directory services/api python ../../scripts/analyze.py ../../scripts/incidents.csv
 
 # HealthCore API (M5–M7)
 cd services/api && uv sync && cp .env.example .env && uv run seed && uv run --env-file .env uvicorn app.main:app --reload --port 8000

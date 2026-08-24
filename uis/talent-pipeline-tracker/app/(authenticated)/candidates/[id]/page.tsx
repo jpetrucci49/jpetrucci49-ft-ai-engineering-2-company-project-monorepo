@@ -1,7 +1,9 @@
 import { CandidateDetailView } from "@/components/candidates/CandidateDetailView";
-import { Alert } from "@/components/ui/Alert";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { fetchNotes } from "@/lib/api/notes";
 import { fetchRecord } from "@/lib/api/records";
+import { ApiError } from "@/types/api";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 
 interface CandidateDetailPageProps {
   params: Promise<{ id: string }>;
@@ -19,11 +21,18 @@ export default async function CandidateDetailPage({ params }: CandidateDetailPag
     candidate = record;
     notes = notesResponse.data;
   } catch (fetchError) {
-    error = fetchError instanceof Error ? fetchError.message : "Could not load candidate.";
+    const status = fetchError instanceof ApiError ? fetchError.status : undefined;
+    error = toUserFacingMessage(fetchError, "Could not load candidate details.", status);
   }
 
   if (error || !candidate || !notes) {
-    return <Alert variant="error">{error ?? "Could not load candidate."}</Alert>;
+    return (
+      <ErrorState
+        message={error ?? "Could not load candidate details."}
+        homeHref="/"
+        homeLabel="Back to pipeline"
+      />
+    );
   }
 
   return <CandidateDetailView initialCandidate={candidate} initialNotes={notes} />;

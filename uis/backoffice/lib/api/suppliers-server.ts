@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { forwardAuthorization } from "@healthcore/api/proxy";
+import { proxySanitizedResponse, runBffHandler } from "@/lib/api/bff-proxy";
 
 /** Server-only helpers for proxying supplier API requests to FastAPI. */
 
@@ -30,11 +31,9 @@ export async function proxyToSuppliersApi(
 }
 
 export async function proxySuppliersResponse(response: Response): Promise<NextResponse> {
-  const body = await response.text();
-  return new NextResponse(body, {
-    status: response.status,
-    headers: {
-      "Content-Type": response.headers.get("Content-Type") ?? "application/json",
-    },
-  });
+  return proxySanitizedResponse(response);
+}
+
+export function runSuppliersBffHandler(handler: () => Promise<NextResponse>): Promise<NextResponse> {
+  return runBffHandler(suppliersApiUnavailableResponse, handler);
 }

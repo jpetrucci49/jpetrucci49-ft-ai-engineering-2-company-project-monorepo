@@ -27,6 +27,10 @@ class InvalidResetTokenError(Exception):
     """Raised when a reset token cannot be consumed."""
 
 
+class PasswordResetDeliveryError(Exception):
+    """Raised when a reset email cannot be delivered after token creation."""
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -94,6 +98,16 @@ def _build_reset_link(raw_token: str) -> str:
     return f"{base_url}?{query}"
 
 
+def _revoke_reset_token(raw_token: str) -> None:
+    token_hash = hash_reset_token(raw_token)
+    table = get_password_reset_tokens_table()
+    matches = table.search(Query().token_hash == token_hash)
+    for document in matches:
+        doc_id = document.get("id")
+        if doc_id is not None:
+            table.remove(doc_ids=[doc_id])
+
+
 def request_password_reset(email: str) -> None:
     """Issue a reset email when the account exists; otherwise no-op (no enumeration)."""
     user = user_service.get_user_by_email(email)
@@ -110,11 +124,13 @@ def request_password_reset(email: str) -> None:
             reset_link=reset_link,
             expires_minutes=expires_minutes,
         )
-    except Exception:
+    except Exception as exc:
         logger.exception(
             "Failed to send password reset email for user_id=%s",
             user.id,
         )
+        _revoke_reset_token(raw_token)
+        raise PasswordResetDeliveryError("Password reset email delivery failed.") from exc
 
 
 def reset_password(raw_token: str, new_password: str) -> None:

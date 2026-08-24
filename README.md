@@ -3,7 +3,7 @@
 HealthCore project workspace containing:
 
 - **Next.js applications** under `uis/` (public website, operations, talent pipeline tracker)
-- **FastAPI backend** under `services/api/` (auth, incident analysis, incident manager, supplier directory)
+- **FastAPI backend** under `services/api/` (auth, incident analysis, incident manager, supplier directory, M12 error handling)
 - TypeScript business logic in `src/utils`
 - Agent infrastructure (`memory-bank/`, `AGENTS.md`, `.agents/`, `skills/`)
 - Vitest unit tests in `tests/utils`
@@ -96,10 +96,20 @@ Python 3.12+ service managed with [uv](https://docs.astral.sh/uv/). Full setup, 
 
 ## Incident analysis CLI (Milestone 5)
 
+From the **repository root** (root `uv` environment):
+
 ```bash
 uv sync
 uv run python scripts/analyze.py scripts/incidents.csv
 ```
+
+With the **API virtualenv** (`--directory services/api`), use paths relative to `services/api/`:
+
+```bash
+uv run --directory services/api python ../../scripts/analyze.py ../../scripts/incidents.csv
+```
+
+See [`scripts/README.md`](scripts/README.md#analyzepy) for exit codes and error-handling smoke tests.
 
 The same CSV feeds the incident manager (M11) — seeding: [`scripts/README.md`](scripts/README.md#seed_incidentspy).
 
@@ -122,6 +132,10 @@ npm run utils:playground
 
 Business logic lives in `src/utils/` and is imported by `uis/backoffice` — never duplicated.
 
+## Testing
+
+Full guide: [`TESTING.md`](TESTING.md) — auth (pytest + Jest), suppliers/incidents (API-042), talent tracker utilities (FE-019), and **M12 error handling** (validation messages, BFF 502, script exit codes).
+
 ## Development workflow
 
 - Root quality gates: `npm run typecheck`, `npm test`
@@ -136,10 +150,10 @@ Business logic lives in `src/utils/` and is imported by `uis/backoffice` — nev
 | `src/` | M2 TypeScript utilities |
 | `tests/` | Vitest suites and fixtures |
 | `uis/website/` | Public Next.js site (M1) |
-| `uis/backoffice/` | Internal operations dashboard (M4–M6, M11 incident manager) |
-| `uis/talent-pipeline-tracker/` | Recruitment UI (M3) |
-| `services/api/` | FastAPI backend (M5–M11) |
-| `packages/shared/` | Cross-app TypeScript (auth, incidents, navigation) |
+| `uis/backoffice/` | Internal operations dashboard (M4–M6, M11 incident manager, M12 error handling) |
+| `uis/talent-pipeline-tracker/` | Recruitment UI (M3, M12 error handling) |
+| `services/api/` | FastAPI backend (M5–M12) |
+| `packages/shared/` | Cross-app TypeScript (auth, api errors, incidents, navigation) |
 | `scripts/` | Python CLI utilities, test data, and seed scripts |
 | `context/` | Milestone company scenarios (programme-assigned) |
 | `specs/` | Implementation specifications |

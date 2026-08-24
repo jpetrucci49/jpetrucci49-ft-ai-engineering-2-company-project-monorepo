@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { fetchRecords } from "@/lib/api/records";
 import type { CandidateFilterValues } from "@/components/candidates/CandidateFilters";
 import type { RecordsListResponse } from "@/types/record";
+import { ApiError } from "@/types/api";
+import { toUserFacingMessage } from "@healthcore/api/errors";
 
 interface UseCandidateRecordsResult {
   response: RecordsListResponse | null;
@@ -49,7 +51,8 @@ export function useCandidateRecords(
         }
       } catch (fetchError) {
         if (!cancelled) {
-          setError(fetchError instanceof Error ? fetchError.message : "Could not load candidates.");
+          const status = fetchError instanceof ApiError ? fetchError.status : undefined;
+          setError(toUserFacingMessage(fetchError, "Could not load candidates.", status));
           setIsPending(false);
           setIsRefetching(false);
         }

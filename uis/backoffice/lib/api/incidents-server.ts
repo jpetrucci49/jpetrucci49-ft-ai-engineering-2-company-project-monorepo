@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { forwardAuthorization } from "@healthcore/api/proxy";
+import { proxySanitizedResponse, runBffHandler } from "@/lib/api/bff-proxy";
 
 /** Server-only helpers for proxying incident API requests to FastAPI. */
 
@@ -14,6 +15,14 @@ export function getIncidentsApiOrigin(): string {
 
 export function incidentsApiUnavailableResponse(): NextResponse {
   return NextResponse.json({ detail: INCIDENTS_API_UNAVAILABLE }, { status: 502 });
+}
+
+export async function proxyIncidentsResponse(response: Response): Promise<NextResponse> {
+  return proxySanitizedResponse(response);
+}
+
+export function runIncidentsBffHandler(handler: () => Promise<NextResponse>): Promise<NextResponse> {
+  return runBffHandler(incidentsApiUnavailableResponse, handler);
 }
 
 export async function proxyToIncidentsApi(
