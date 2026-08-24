@@ -42,6 +42,10 @@ Ensure the API is running (`npm run dev:api` or full `npm run dev`).
 | `/incidents/manage` | M11 | List, filter, and update incident status |
 | `/incidents/summary` | M11 | Leadership metrics by status, category, origin, branch |
 | `/suppliers` | M6 | Supplier directory — browse, filter, register, rate/status |
+| `/inventory/products` | M5.5 | Medical supply catalogue with current stock |
+| `/inventory/orders/inbound` | M5.5 | Log a vendor delivery |
+| `/inventory/orders/outbound` | M5.5 | Log a clinical consumption |
+| `/inventory/orders` | M5.5 | Read-only supply movements |
 
 ## Testing password recovery (M9)
 
@@ -63,6 +67,7 @@ The browser calls same-origin `/api/*` routes. Next.js proxies server-side to Fa
 | `INCIDENTS_API_URL` | `http://127.0.0.1:8000` | `/api/incidents/*` (M5 analyze/export and M11 manager) |
 | `SUPPLIERS_API_URL` | `http://127.0.0.1:8000` | `/api/suppliers/*` |
 | `AUTH_API_URL` | `http://127.0.0.1:8000` | `/api/auth/*`, `/api/users`, `/api/profiles/*` |
+| `INVENTORY_API_URL` | `http://127.0.0.1:8000` | `/api/inventory/*` |
 
 ### Error handling (M12)
 
@@ -124,6 +129,24 @@ Spec: `specs/11_SPECS.md`. After seeding (see [`scripts/README.md`](../../script
 - Suspend / activate only — no delete in UI (per `context/06_CONTEXT.md`)
 
 Spec: `specs/06_SPECS_FRONTEND.md`.
+
+### Medical supplies (M5.5)
+
+| File | Role |
+| --- | --- |
+| `lib/api/inventory.ts` | Client helpers (list/get supplies, record delivery/consumption, list movements) |
+| `lib/api/inventory-server.ts` | Server proxy to FastAPI `/inventory` |
+| `app/api/inventory/**/route.ts` | BFF handlers |
+| `components/inventory/` | Catalogue, vendor delivery, clinical consumption, movements |
+| `types/inventory.ts` | API types, clinic/category labels, stock-level helper |
+
+- **Catalogue** (`/inventory/products`) — name, SKU, category, unit, jurisdiction, current stock (0 red / 1–10 amber / >10 green)
+- **Vendor delivery** (`/inventory/orders/inbound`) — supply selected by name; `?supply_id=` prefill; success keeps query supply
+- **Clinical consumption** (`/inventory/orders/outbound`) — live current stock via `getSupply`; oversell warning; API insufficient-stock on the quantity field
+- **Supply movements** (`/inventory/orders`) — read-only deliveries and consumptions
+- Nav: **Supplies**, **Movements** in `BackofficeShell`
+
+Spec: `specs/05.5_SPECS_FRONT.md`. Seed: `uv run --directory services/api python seed_inventory.py`.
 
 ## Dashboard sections (M2)
 

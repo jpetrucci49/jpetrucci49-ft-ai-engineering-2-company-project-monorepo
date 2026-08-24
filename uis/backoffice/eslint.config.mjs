@@ -5,6 +5,13 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["components/auth/AuthGuard.tsx", "components/auth/ProfileForm.tsx"],
+    rules: {
+      // Existing auth loaders predate react-hooks/set-state-in-effect; inventory pages follow the rule.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

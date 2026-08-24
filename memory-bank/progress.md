@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 5.5 complete — Medical supply inventory API_
+_Last updated: Milestone 5.5 complete — Medical supply inventory API + backoffice UI_
 
 ## Completed
 
@@ -145,6 +145,9 @@ _Last updated: Milestone 5.5 complete — Medical supply inventory API_
 - [x] `current_stock` computed from deliveries − consumptions; outbound rejects insufficient stock (exact 400 message)
 - [x] `seed_inventory.py` — 6 supplies, ≥4 deliveries, ≥3 consumptions; `--reset` for local rebuild
 - [x] `tests/test_inventory.py` — I1–I9 plus duplicate SKU, unknown supply, schema edges (in-memory SQLite)
+- [x] Backoffice UI (`specs/05.5_SPECS_FRONT.md`) — catalogue, vendor delivery, clinical consumption, supply movements
+- [x] BFF at `app/api/inventory/*` via `INVENTORY_API_URL`; client helpers in `lib/api/inventory.ts` (`authFetch` only)
+- [x] Nav: **Supplies** (`/inventory/products`), **Movements** (`/inventory/orders`)
 
 ## In progress
 

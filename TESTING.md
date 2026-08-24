@@ -523,6 +523,12 @@ See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full 
 - [x] Cases I1–I9 (happy / edge / failure per endpoint group)
 - [x] `uv run pytest` passes (includes inventory)
 
+### M5.5 — inventory UI
+
+- [x] Backoffice routes `/inventory/products`, `/inventory/orders/inbound`, `/inventory/orders/outbound`, `/inventory/orders`
+- [x] Same-origin BFF `/api/inventory/*` (`INVENTORY_API_URL`)
+- [x] `npm run lint` and `npm run build` in `uis/backoffice/`
+
 ### AI workflow
 
 - [ ] Agent used to review case list for gaps
