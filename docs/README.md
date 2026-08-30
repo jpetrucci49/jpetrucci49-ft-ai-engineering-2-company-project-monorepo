@@ -9,4 +9,9 @@ This folder holds **cross-cutting documentation** for the monorepo: architecture
 
 - [ARCHITECTURE_PROPOSAL.md](./ARCHITECTURE_PROPOSAL.md) — HealthCore backend pattern, FastAPI structure, domain routers, monorepo FE/BE considerations
 
+## Observability
+
+- [telemetry/telemetry-plan.md](./telemetry/telemetry-plan.md) — Telemetry Plan (catalogue, envelope, delivery)
+- [telemetry/event-schemas.json](./telemetry/event-schemas.json) — Event envelope and per-type JSON Schema (draft-07)
+
 > _Spanish version: [README.es.md](./README.es.md)._
