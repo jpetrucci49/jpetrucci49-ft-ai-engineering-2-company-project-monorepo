@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 13 — Docker Compose development environment_
+_Last updated: Telemetry Plan (design) — docs/telemetry/_
 
 ## Completed
 
@@ -157,6 +157,12 @@ _Last updated: Milestone 13 — Docker Compose development environment_
 - [x] Root `docker-compose.yml` — services `ui` and `api` on network `healthcore`; BFF URLs `http://api:8000`
 - [x] Root `.env.example` (secrets stay in gitignored `.env`)
 - [x] `GET /health` for Compose probes (not `/openapi.json`)
+
+### Telemetry Plan (design)
+
+- [x] Spec context: `context/13_CONTEXT.md`
+- [x] `docs/telemetry/telemetry-plan.md` — mandatory CONTEXT metrics + broad backoffice catalogue
+- [x] `docs/telemetry/event-schemas.json` — envelope + 5 mandatory + 10 identified event schemas
 
 ## In progress
 
