@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Telemetry Plan (design) — docs/telemetry/_
+_Last updated: Milestone 6.5 capture spec — specs/06.5_FE_TELEM_SPECS.md_
 
 ## Completed
 
@@ -166,10 +166,11 @@ _Last updated: Telemetry Plan (design) — docs/telemetry/_
 
 ## In progress
 
-- [ ] Live API integrations for backoffice operations dashboard (future milestone)
+- [ ] Milestone 6.5 — frontend telemetry capture (`specs/06.5_FE_TELEM_SPECS.md`; context `context/06.5_CONTEXT.md`). Order: stub → service → instrumentation. No persistence.
 
 ## Planned next
 
+- Live API integrations for backoffice operations dashboard
 - Agent implementations under `agents/`
 - Executive KPI dashboard
 - HealthCore central API
