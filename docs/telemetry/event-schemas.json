@@ -28,7 +28,8 @@
         "api_latency_recorded",
         "frontend_error_uncaught",
         "page_viewed",
-        "flow_abandoned"
+        "flow_abandoned",
+        "web_vital_recorded"
       ],
       "properties": {
         "inbound_order_created": { "$ref": "#/definitions/inbound_order_created" },
@@ -45,7 +46,8 @@
         "api_latency_recorded": { "$ref": "#/definitions/api_latency_recorded" },
         "frontend_error_uncaught": { "$ref": "#/definitions/frontend_error_uncaught" },
         "page_viewed": { "$ref": "#/definitions/page_viewed" },
-        "flow_abandoned": { "$ref": "#/definitions/flow_abandoned" }
+        "flow_abandoned": { "$ref": "#/definitions/flow_abandoned" },
+        "web_vital_recorded": { "$ref": "#/definitions/web_vital_recorded" }
       }
     }
   },
@@ -386,6 +388,22 @@
         }
       ]
     },
+    "web_vital_recorded": {
+      "allOf": [
+        { "$ref": "#/definitions/eventMeta" },
+        {
+          "properties": {
+            "classification": { "const": "identified" },
+            "category": { "const": "performance" },
+            "delivery": { "const": "batch" },
+            "containsPiiOrPhi": { "const": false },
+            "sanitisation": { "const": "Metric name, numeric value, and route only." },
+            "description": { "const": "Web Vital sample for the current backoffice route." },
+            "schema": { "$ref": "#/definitions/schemas/web_vital_recorded" }
+          }
+        }
+      ]
+    },
     "schemas": {
       "inbound_order_created": {
         "allOf": [
@@ -650,7 +668,7 @@
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "enum": ["invalid_credentials", "inactive", "malformed"]
+                    "enum": ["invalid_credentials", "inactive", "malformed", "network_error"]
                   }
                 }
               }
@@ -787,6 +805,30 @@
                   },
                   "last_step": { "type": "string" },
                   "duration_ms": { "type": "number", "minimum": 0 }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "web_vital_recorded": {
+        "allOf": [
+          { "$ref": "#/definitions/envelope" },
+          {
+            "type": "object",
+            "properties": {
+              "event_type": { "const": "web_vital_recorded" },
+              "properties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "value", "route"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "enum": ["CLS", "INP", "LCP", "FCP", "TTFB"]
+                  },
+                  "value": { "type": "number" },
+                  "route": { "type": "string", "pattern": "^/" }
                 }
               }
             }

@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Telemetry Plan (design) — docs/telemetry/_
+_Last updated: Milestone 6.5 — backoffice telemetry capture_
 
 ## Completed
 
@@ -162,14 +162,23 @@ _Last updated: Telemetry Plan (design) — docs/telemetry/_
 
 - [x] Spec context: `context/13_CONTEXT.md`
 - [x] `docs/telemetry/telemetry-plan.md` — mandatory CONTEXT metrics + broad backoffice catalogue
-- [x] `docs/telemetry/event-schemas.json` — envelope + 5 mandatory + 10 identified event schemas
+- [x] `docs/telemetry/event-schemas.json` — envelope + 5 mandatory + 11 identified event schemas (16 total, including `web_vital_recorded`)
+
+### Milestone 6.5 — Telemetry capture (frontend)
+
+- [x] Spec: `specs/06.5_FE_TELEM_SPECS.md`; context: `context/06.5_CONTEXT.md`
+- [x] FastAPI stub `POST /telemetry/events` — envelope validation, `{ received: N }`, no DB
+- [x] `uis/backoffice/lib/telemetry/` — queue, 10s/20 batch, sendBeacon, retry, `track()`
+- [x] Mandatory CONTEXT events + auth, latency, errors, page views, Web Vitals
+- [x] `NEXT_PUBLIC_TELEMETRY_ENDPOINT` / `TELEMETRY_ENDPOINT`
 
 ## In progress
 
-- [ ] Live API integrations for backoffice operations dashboard (future milestone)
+_(none)_
 
 ## Planned next
 
+- Live API integrations for backoffice operations dashboard
 - Agent implementations under `agents/`
 - Executive KPI dashboard
 - HealthCore central API

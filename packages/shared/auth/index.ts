@@ -1,4 +1,5 @@
-export { authFetch } from "./fetch";
+export { authFetch, setAuthFetchObserver } from "./fetch";
+export type { AuthFetchObserver } from "./fetch";
 export { buildAuthenticatedAppUrl, bootstrapAuthSession, consumeTokenFromHash } from "./cross-app";
 export { humanizeValidationMessage, parseApiError, parseApiFieldErrors } from "./errors";
 export type {

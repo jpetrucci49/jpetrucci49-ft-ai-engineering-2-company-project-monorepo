@@ -4,10 +4,13 @@ import { useRouter } from "next/navigation";
 
 import { clearToken } from "@healthcore/auth";
 
+import { setTelemetryUser } from "@/lib/telemetry";
+
 export function LogoutButton({ className }: { className?: string }) {
   const router = useRouter();
 
   function handleLogout() {
+    setTelemetryUser(null);
     clearToken();
     router.replace("/login");
   }

@@ -28,6 +28,8 @@ npm run dev -- -p 3001
 
 Ensure the API is running (`npm run dev:api` or full `npm run dev`).
 
+Telemetry capture (M6.5) posts batches to the FastAPI stub. Copy `NEXT_PUBLIC_TELEMETRY_ENDPOINT` into `.env.local` (see `.env.example`) and restart `next dev`. Events go through `track()` only — never call the stub from a component. DevTools → Network: `POST http://localhost:8000/telemetry/events` should return `{ "received": N }`.
+
 ## Routes
 
 | Route | Milestone | Purpose |
