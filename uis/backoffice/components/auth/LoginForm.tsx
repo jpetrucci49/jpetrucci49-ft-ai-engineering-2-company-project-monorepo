@@ -5,8 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { bootstrapAuthSession, isAuthenticated, parseApiError, setToken } from "@healthcore/auth";
-import type { TokenResponse } from "@healthcore/auth";
+import type { AuthMe, TokenResponse } from "@healthcore/auth";
 import Link from "next/link";
+
+import { setTelemetryUser, track } from "@/lib/telemetry";
+import type { LoginFailureReason } from "@/lib/telemetry";
 
 export function LoginForm() {
   const router = useRouter();
@@ -39,6 +42,9 @@ export function LoginForm() {
       });
 
       if (!response.ok) {
+        setTelemetryUser(null);
+        const reason: LoginFailureReason = response.status === 401 ? "invalid_credentials" : "malformed";
+        track("login_failed", { reason });
         setError(await parseApiError(response));
         return;
       }
@@ -46,10 +52,25 @@ export function LoginForm() {
       const payload = (await response.json()) as TokenResponse;
       setToken(payload.access_token);
 
+      const meResponse = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${payload.access_token}` },
+      });
+      if (meResponse.ok) {
+        const me = (await meResponse.json()) as AuthMe;
+        setTelemetryUser(String(me.profile.user_id));
+        const role = me.role === "admin" || me.role === "manager" ? me.role : "user";
+        track("login_succeeded", { role });
+      } else {
+        setTelemetryUser(null);
+        track("login_succeeded", { role: "user" });
+      }
+
       const next = searchParams.get("next");
       const destination = next && next.startsWith("/") ? next : "/";
       router.replace(destination);
     } catch {
+      setTelemetryUser(null);
+      track("login_failed", { reason: "network_error" });
       setError("Unable to reach the server. Try again.");
     } finally {
       setSubmitting(false);

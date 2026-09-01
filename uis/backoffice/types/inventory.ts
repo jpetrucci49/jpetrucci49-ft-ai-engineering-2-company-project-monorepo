@@ -12,6 +12,7 @@ export interface MedicalSupply {
   unit: string;
   country: string;
   current_stock: number;
+  expiry_date?: string;
 }
 
 export interface SupplySummary {

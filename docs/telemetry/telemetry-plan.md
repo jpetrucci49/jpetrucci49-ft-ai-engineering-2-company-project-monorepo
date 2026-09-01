@@ -224,7 +224,7 @@ Rate **values** are commercially sensitive; emit a boolean/count signal, not `mo
 
 ## 6. Phase 2 — events designed for capture (schemas)
 
-Fully specified below and in `event-schemas.json`: **all 5 mandatory events** plus **10 identified events** in four categories (inventory, authentication, performance, errors/navigation).
+Fully specified below and in `event-schemas.json`: **all 5 mandatory events** plus **11 identified events** (16 total) in four categories (inventory, authentication, performance, errors/navigation). `web_vital_recorded` was added at capture time so the schema stays the source of truth for the additional Web Vitals activity.
 
 PII policy: staff `userId` only. No emails, names, phones, addresses, passwords, tokens, or incident descriptions. `vendor_name` is an organisation name, not personal data.
 
@@ -336,7 +336,7 @@ Allowlist: `result_count`, `out_of_stock_count`, `low_stock_count`.
 
 #### `login_failed` — identified · authentication · stream
 
-Allowlist: `reason` (`invalid_credentials` \| `inactive` \| `malformed`). **No email, no IP** (IP is personal under UK GDPR unless separately justified). Count + timestamp + session is enough to see daily failure volume and brute-force spikes.
+Allowlist: `reason` (`invalid_credentials` \| `inactive` \| `malformed` \| `network_error`). **No email, no IP** (IP is personal under UK GDPR unless separately justified). Count + timestamp + session is enough to see daily failure volume and brute-force spikes. `session_expired` is a separate event, not a `login_failed` reason.
 
 #### `login_succeeded` — identified · authentication · stream
 
@@ -362,6 +362,10 @@ Allowlist: `route`, `referrer_route` (internal path or `null`).
 
 Allowlist: `flow` (`inbound_order` \| `outbound_order` \| `incident_register` \| `supplier_register` \| `login`), `last_step`, `duration_ms`.
 
+#### `web_vital_recorded` — identified · performance · batch
+
+Fires from the backoffice Web Vitals callback (`CLS`, `INP`, `LCP`, `FCP`, `TTFB`). Allowlist: `name`, `value` (number), `route` (pathname only). No attribution strings, URLs with query, or element markup.
+
 ---
 
 ## 7. Phase 3 — delivery strategy
@@ -380,6 +384,7 @@ Allowlist: `flow` (`inbound_order` \| `outbound_order` \| `incident_register` \|
 | `login_succeeded` | stream | Ties sessions to later inventory events (`userId` + `sessionId`) |
 | `session_expired` | stream | If expiries spike mid-shift, change token TTL the same day |
 | `api_latency_recorded` | batch | p95 review is periodic; raw samples are high volume |
+| `web_vital_recorded` | batch | Shift-blocking UX is found in weekly review of LCP/INP by route, not as a pager event |
 | `frontend_error_uncaught` | stream | A crashing consumption form blocks clinics now |
 | `page_viewed` | batch | Nav popularity is a product decision, not an incident |
 | `flow_abandoned` | batch | Funnel analysis is periodic |
@@ -391,6 +396,7 @@ Allowlist: `flow` (`inbound_order` \| `outbound_order` \| `incident_register` \|
 | `page_viewed` | Once per `route` per `sessionId` (ignore React remounts) |
 | `catalogue_viewed` | Once per catalogue visit (not per table re-render) |
 | `api_latency_recorded` | Sample 10% **or** always if `duration_ms >= 500` |
+| `web_vital_recorded` | Once per `{name, route}` per `sessionId` |
 | `frontend_error_uncaught` | Dedupe `{route, name, digest}` for 60 seconds |
 | `stock_threshold_triggered` | Once per `{product_id, threshold_kind}` per 15 minutes unless `quantity` changes band |
 | `login_failed` | No throttle (volume **is** the signal); store counts, not identities |

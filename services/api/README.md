@@ -12,6 +12,7 @@ FastAPI service for internal HealthCore Digital tools:
 | M11 | Incident manager (TinyDB lifecycle CRUD) | `/incidents/register`, `/incidents/manage`, `/incidents/summary` |
 | M12 | Error handling hardening | Field-specific validation messages, BFF error proxy, UI error states |
 | M5.5 | Medical supply inventory (SQLModel + Postgres/SQLite) | `/inventory/products`, `/inventory/orders`, `/inventory/orders/inbound`, `/inventory/orders/outbound` |
+| M6.5 | Telemetry stub (envelope validation only, no persistence) | — |
 
 ## Stack
 
@@ -244,6 +245,10 @@ All routes require `Authorization: Bearer <token>`. Paths use `products` / `orde
 | `GET` | `/inventory/orders` | List deliveries and consumptions with supply data |
 
 Insufficient stock → **400** with `Insufficient stock for supply '{name}'. Available: {available}, requested: {quantity}.` Duplicate SKU → **409**. Validation errors follow M12 (sanitized field messages; HTTP **400**).
+
+### Telemetry stub (M6.5)
+
+`POST /telemetry/events` is public (no JWT — `sendBeacon` cannot attach `Authorization`). Body `{ "events": [ <envelope> ] }`. Returns `{ "received": N }`. Does not write to a database. Set `TELEMETRY_ENDPOINT` in `.env` (unused for proxying this phase).
 
 ### Tests
 

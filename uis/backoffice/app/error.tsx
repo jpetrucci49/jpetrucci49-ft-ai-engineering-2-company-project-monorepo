@@ -1,13 +1,25 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 
+import { track } from "@/lib/telemetry";
+
 export default function Error({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    const route = typeof window !== "undefined" ? window.location.pathname : "/";
+    track("frontend_error_uncaught", {
+      route: route.startsWith("/") ? route : `/${route}`,
+      name: error.name || "Error",
+      digest: error.digest,
+    });
+  }, [error]);
   return (
     <div className="mx-auto max-w-lg rounded-lg border border-red-200 bg-red-50 p-6 text-slate-900">
       <h2 className="text-lg font-semibold">Something went wrong</h2>

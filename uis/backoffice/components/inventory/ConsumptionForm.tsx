@@ -12,6 +12,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Spinner } from "@/components/ui/Spinner";
 import { createConsumption, getSupply, listSupplies } from "@/lib/api/inventory";
+import { DEPARTMENT_LABELS, isDepartment, type Department } from "@/lib/telemetry";
+import { useFlowAbandon } from "@/lib/telemetry/useFlowAbandon";
 import {
   CONSUMPTION_TYPE_LABELS,
   InventoryApiError,
@@ -47,10 +49,12 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
   const [quantity, setQuantity] = useState("");
   const [consumptionType, setConsumptionType] = useState<ConsumptionType>("clinical_use");
   const [clinicId, setClinicId] = useState("");
+  const [department, setDepartment] = useState<Department>("general_consultation");
   const [formError, setFormError] = useState<string | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const abandon = useFlowAbandon("outbound_order");
 
   const displayedSupply = selectedSupply && String(selectedSupply.id) === supplyId ? selectedSupply : null;
   const parsedQuantity = Number(quantity);
@@ -110,15 +114,20 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
 
     setIsSubmitting(true);
     try {
-      await createConsumption({
-        supply_id: parsedSupplyId,
-        quantity: parsedQuantity,
-        consumption_type: consumptionType,
-        clinic_id: parsedClinicId,
-      });
+      await createConsumption(
+        {
+          supply_id: parsedSupplyId,
+          quantity: parsedQuantity,
+          consumption_type: consumptionType,
+          clinic_id: parsedClinicId,
+        },
+        { department, apiCategory: displayedSupply?.category }
+      );
+      abandon.markCompleted();
       setQuantity("");
       setConsumptionType("clinical_use");
       setClinicId("");
+      setDepartment("general_consultation");
       if (!keepQuerySupply) setSupplyId("");
       else setStockEpoch((epoch) => epoch + 1);
       setSuccessMessage("Clinical consumption recorded. Current stock has decreased.");
@@ -153,7 +162,10 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
           <SupplySelect
             supplies={supplies}
             value={supplyId}
-            onChange={setSupplyId}
+            onChange={(value) => {
+              abandon.markStep("supply");
+              setSupplyId(value);
+            }}
             disabled={isSubmitting}
           />
 
@@ -183,6 +195,7 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
               required
               value={quantity}
               onChange={(event) => {
+                abandon.markStep("quantity");
                 setQuantity(event.target.value);
                 setQuantityError(null);
               }}
@@ -207,7 +220,10 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
             <select
               className={inputClassName}
               value={consumptionType}
-              onChange={(event) => setConsumptionType(event.target.value as ConsumptionType)}
+              onChange={(event) => {
+                abandon.markStep("consumption_type");
+                setConsumptionType(event.target.value as ConsumptionType);
+              }}
               disabled={isSubmitting}
             >
               {(Object.keys(CONSUMPTION_TYPE_LABELS) as ConsumptionType[]).map((type) => (
@@ -218,7 +234,36 @@ function ConsumptionFormFields({ querySupplyId }: { querySupplyId: string }) {
             </select>
           </label>
 
-          <ClinicSelect value={clinicId} onChange={setClinicId} disabled={isSubmitting} />
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">Department</span>
+            <select
+              className={inputClassName}
+              name="department"
+              value={department}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!isDepartment(value)) return;
+                abandon.markStep("department");
+                setDepartment(value);
+              }}
+              disabled={isSubmitting}
+            >
+              {(Object.keys(DEPARTMENT_LABELS) as Department[]).map((value) => (
+                <option key={value} value={value}>
+                  {DEPARTMENT_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <ClinicSelect
+            value={clinicId}
+            onChange={(value) => {
+              abandon.markStep("clinic");
+              setClinicId(value);
+            }}
+            disabled={isSubmitting}
+          />
 
           {formError ? (
             <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">

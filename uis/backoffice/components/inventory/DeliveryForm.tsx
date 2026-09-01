@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Spinner } from "@/components/ui/Spinner";
 import { createDelivery, listSupplies } from "@/lib/api/inventory";
+import { useFlowAbandon } from "@/lib/telemetry/useFlowAbandon";
 import { InventoryApiError, type MedicalSupply } from "@/types/inventory";
 import { toUserFacingMessage } from "@healthcore/api/errors";
 
@@ -38,6 +39,7 @@ function DeliveryFormFields({ querySupplyId }: { querySupplyId: string }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const abandon = useFlowAbandon("inbound_order");
 
   const keepQuerySupply = Boolean(querySupplyId);
 
@@ -63,6 +65,7 @@ function DeliveryFormFields({ querySupplyId }: { querySupplyId: string }) {
         vendor_name: vendorName.trim(),
         clinic_id: parsedClinicId,
       });
+      abandon.markCompleted();
       setQuantity("");
       setVendorName("");
       setClinicId("");
@@ -94,7 +97,10 @@ function DeliveryFormFields({ querySupplyId }: { querySupplyId: string }) {
           <SupplySelect
             supplies={supplies}
             value={supplyId}
-            onChange={setSupplyId}
+            onChange={(value) => {
+              abandon.markStep("supply");
+              setSupplyId(value);
+            }}
             disabled={isSubmitting}
           />
 
@@ -107,7 +113,10 @@ function DeliveryFormFields({ querySupplyId }: { querySupplyId: string }) {
               step={1}
               required
               value={quantity}
-              onChange={(event) => setQuantity(event.target.value)}
+              onChange={(event) => {
+                abandon.markStep("quantity");
+                setQuantity(event.target.value);
+              }}
               disabled={isSubmitting}
             />
           </label>
@@ -120,13 +129,23 @@ function DeliveryFormFields({ querySupplyId }: { querySupplyId: string }) {
               required
               maxLength={200}
               value={vendorName}
-              onChange={(event) => setVendorName(event.target.value)}
+              onChange={(event) => {
+                abandon.markStep("vendor");
+                setVendorName(event.target.value);
+              }}
               disabled={isSubmitting}
               placeholder="MedLine Industries"
             />
           </label>
 
-          <ClinicSelect value={clinicId} onChange={setClinicId} disabled={isSubmitting} />
+          <ClinicSelect
+            value={clinicId}
+            onChange={(value) => {
+              abandon.markStep("clinic");
+              setClinicId(value);
+            }}
+            disabled={isSubmitting}
+          />
 
           {formError ? (
             <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">

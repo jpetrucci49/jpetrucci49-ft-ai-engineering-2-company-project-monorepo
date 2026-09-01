@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 
 import { InventoryPageHeader } from "@/components/inventory/InventoryPageHeader";
@@ -8,7 +9,8 @@ import { useReloadableResource } from "@/components/inventory/useReloadableResou
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { listSupplies } from "@/lib/api/inventory";
-import { categoryLabel, type MedicalSupply } from "@/types/inventory";
+import { track } from "@/lib/telemetry";
+import { LOW_STOCK_MAX, categoryLabel, type MedicalSupply } from "@/types/inventory";
 
 const EMPTY_SUPPLIES: MedicalSupply[] = [];
 
@@ -18,6 +20,18 @@ export function SupplyCataloguePage() {
     "Unable to load medical supplies.",
     EMPTY_SUPPLIES
   );
+  const viewedVisit = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || error || viewedVisit.current) return;
+    viewedVisit.current = true;
+    track("catalogue_viewed", {
+      result_count: supplies.length,
+      out_of_stock_count: supplies.filter((item) => item.current_stock <= 0).length,
+      low_stock_count: supplies.filter((item) => item.current_stock > 0 && item.current_stock <= LOW_STOCK_MAX)
+        .length,
+    });
+  }, [error, isLoading, supplies]);
 
   return (
     <div className="space-y-6">

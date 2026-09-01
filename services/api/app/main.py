@@ -15,6 +15,7 @@ from routes.auth import router as auth_router
 from routes.profiles import router as profiles_router
 from routes.suppliers import router as suppliers_router
 from routes.users import router as users_router
+from telemetry.router import router as telemetry_router
 
 
 @asynccontextmanager
@@ -71,6 +72,7 @@ app.include_router(incidents_router, prefix="/api")
 app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)
 app.include_router(inventory_router)
+app.include_router(telemetry_router)
 
 
 @app.get("/health", include_in_schema=False)
