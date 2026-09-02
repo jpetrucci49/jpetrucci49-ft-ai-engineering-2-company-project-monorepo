@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 6.5 — backoffice telemetry capture_
+_Last updated: Milestone 6.5 backend telemetry storage spec_
 
 ## Completed
 
@@ -174,7 +174,7 @@ _Last updated: Milestone 6.5 — backoffice telemetry capture_
 
 ## In progress
 
-_(none)_
+- [ ] Milestone 6.5 backend — persist telemetry (`specs/06.5_BE_TELEM_SPECS.md`). Bulk insert, partial validation. No frontend capture changes.
 
 ## Planned next
 
