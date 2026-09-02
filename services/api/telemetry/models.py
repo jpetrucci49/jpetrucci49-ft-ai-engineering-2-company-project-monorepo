@@ -22,7 +22,7 @@ class TelemetryEvent(BaseModel):
 class TelemetryBatchEnvelope(BaseModel):
     """Loose batch: items are validated one-by-one so a bad event does not 422 the rest."""
 
-    events: list[TelemetryEvent]
+    events: list[Any]
 
 
 class TelemetryBatchOut(BaseModel):
