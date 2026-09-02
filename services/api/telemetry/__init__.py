@@ -1,1 +1,1 @@
-"""Temporary telemetry intake. Phase 3 replaces the handler; models stay."""
+"""Write-only telemetry ingest. Query/report endpoints are out of scope."""

@@ -138,6 +138,7 @@ def inventory_client() -> Generator:
     from app.main import app
     from inventory.database import configure_engine, get_db, reset_engine
     import inventory.models  # noqa: F401
+    import telemetry.table  # noqa: F401 — create_all here does not call init_inventory_schema
 
     engine = configure_engine(
         "sqlite://",

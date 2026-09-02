@@ -246,21 +246,25 @@ All routes require `Authorization: Bearer <token>`. Paths use `products` / `orde
 
 Insufficient stock → **400** with `Insufficient stock for supply '{name}'. Available: {available}, requested: {quantity}.` Duplicate SKU → **409**. Validation errors follow M12 (sanitized field messages; HTTP **400**).
 
-### Telemetry stub (M6.5)
+### Telemetry (M6.5)
 
-`POST /telemetry/events` is public (no JWT — `sendBeacon` cannot attach `Authorization`). Body `{ "events": [ <envelope> ] }`. Returns `{ "received": N }`. Does not write to a database. Set `TELEMETRY_ENDPOINT` in `.env` (unused for proxying this phase).
+`POST /telemetry/events` is public (no JWT — `sendBeacon` cannot attach `Authorization`). Body `{ "events": [ <raw envelopes> ] }`. Each item is validated independently: valid rows are bulk-inserted in one transaction; invalid items increment `rejected`. HTTP **200** with `{ "received", "stored", "rejected" }` whenever `events` is a JSON array. Missing or non-array `events` → **400**.
+
+Rows land in `telemetry_events` on the same SQL engine as inventory (`get_db()`). Fallback DDL: `telemetry/schema.sql`. Set `TELEMETRY_ENDPOINT` in `.env` to match the public URL (the frontend uses `NEXT_PUBLIC_TELEMETRY_ENDPOINT`).
+
+There is no GET/PATCH/PUT/DELETE for telemetry rows.
 
 ### Tests
 
 ```bash
-cd services/api && uv run pytest tests/test_inventory.py -v
+cd services/api && uv run pytest tests/test_inventory.py tests/test_telemetry.py -v
 ```
 
-Tests use **in-memory SQLite** (no live Supabase in CI). Postgres-specific dialect behaviour is not exercised.
+Tests use **in-memory SQLite** (no live Supabase in CI). Postgres-specific dialect behaviour (GIN on `tags`) is not exercised.
 
 ```text
 Browser / curl
-    │  Bearer JWT
+    │  Bearer JWT (inventory) · unauthenticated (telemetry POST)
     ▼
 FastAPI
     ├── get_current_user ──► TinyDB (auth.json)
@@ -268,7 +272,8 @@ FastAPI
     └── get_db ──► SQLModel session ──► Postgres / SQLite
               ├── MedicalSupply
               ├── SupplyDelivery
-              └── SupplyConsumption
+              ├── SupplyConsumption
+              └── TelemetryEventRow (telemetry_events)
 ```
 
 ## Incident analysis (M5)

@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 6.5 — backoffice telemetry capture_
+_Last updated: Milestone 6.5 backend telemetry persistence_
 
 ## Completed
 
@@ -172,9 +172,16 @@ _Last updated: Milestone 6.5 — backoffice telemetry capture_
 - [x] Mandatory CONTEXT events + auth, latency, errors, page views, Web Vitals
 - [x] `NEXT_PUBLIC_TELEMETRY_ENDPOINT` / `TELEMETRY_ENDPOINT`
 
+### Milestone 6.5 — Telemetry storage (backend)
+
+- [x] Spec: `specs/06.5_BE_TELEM_SPECS.md`
+- [x] `telemetry_events` on the inventory SQL engine; bulk `add_all`; one commit per batch
+- [x] Loose `{ events: [...] }` parse; per-item `TelemetryEvent.model_validate`; HTTP 200 `{ received, stored, rejected }`
+- [x] Allowlisted `tags` + correlation keys; no PHI keys; mapping in `docs/telemetry/telemetry-plan.md` §3.4
+
 ## In progress
 
-_(none)_
+_None._
 
 ## Planned next
 

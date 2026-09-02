@@ -1,4 +1,4 @@
-"""Standard event envelope. Reused as-is when persistence is added."""
+"""Standard event envelope. Field names on TelemetryEvent are a contract — do not rename."""
 
 from __future__ import annotations
 
@@ -19,9 +19,13 @@ class TelemetryEvent(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
 
 
-class TelemetryBatchIn(BaseModel):
-    events: list[TelemetryEvent]
+class TelemetryBatchEnvelope(BaseModel):
+    """Loose batch: items are validated one-by-one so a bad event does not 422 the rest."""
+
+    events: list[Any]
 
 
 class TelemetryBatchOut(BaseModel):
     received: int
+    stored: int
+    rejected: int

@@ -1,7 +1,7 @@
 # HealthCore Telemetry Plan
 
-**Status:** Design only — no instrumentation in this deliverable.  
-**Audience:** the team implementing capture tomorrow.  
+**Status:** Catalogue plus capture and write-only storage. This plan remains the source of truth for envelope, `event_type`s, and allowlists.  
+**Audience:** implementers of capture, storage, and later dashboards.  
 **Domain source:** [`context/13_CONTEXT.md`](../../context/13_CONTEXT.md)  
 **Companion schema:** [`event-schemas.json`](./event-schemas.json) (JSON Schema draft-07 plus a documented catalogue wrapper)
 
@@ -89,6 +89,33 @@ Every event **must** include these fields. Names match the programme contract (m
 No envelope field may hold PHI. `userId` is a staff identifier, not a patient identifier.
 
 `event_type` verbs used in this plan: `created`, `rejected`, `triggered`, `flagged`, `failed`, `succeeded`, `viewed`, `expired`, `recorded`, `uncaught`, `abandoned`, `requested`, `changed`.
+
+### 3.4 Storage mapping
+
+Write-only table `telemetry_events` (same Postgres/SQLite engine as inventory). One HTTP batch is one transaction. Unknown property keys are stripped using the same allowlists as `uis/backoffice/lib/telemetry/allowlist.ts`. Keys `email`, `password`, `token`, `authorization`, and `description` are dropped if present.
+
+| Column | Source |
+| --- | --- |
+| `timestamp` | envelope `timestamp` |
+| `service` | `"backoffice"` |
+| `event_type` | envelope `event_type` |
+| `level` | `error` for `frontend_error_uncaught`; `warn` for `login_failed`, `session_expired`, `outbound_order_rejected`, `inventory_validation_failed`, `direct_stock_edit_rejected`, `stock_threshold_triggered`, `supply_expiry_flagged`; otherwise `info` |
+| `value` | first numeric among allowlisted `value`, `duration_ms`, `quantity` |
+| `message` | `event_type` plus `product_id` or `route` when present — never error text or emails |
+| `tags` | allowlisted properties **plus** correlation keys |
+
+```text
+tags = {
+  ...allowlisted properties...,
+  "eventId": event.eventId,
+  "sessionId": event.sessionId,
+  "userId": event.userId,          # string or null
+  "schemaVersion": event.schemaVersion,
+  "requestId": event.requestId,
+}
+```
+
+`eventId` is stored in `tags` only (no unique constraint this phase). There is no UPDATE/DELETE API.
 
 ---
 
