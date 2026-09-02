@@ -136,6 +136,7 @@ def _reset_tables() -> None:
     from sqlmodel import SQLModel
 
     import inventory.models  # noqa: F401
+    import telemetry.table  # noqa: F401 — recreate telemetry_events with inventory tables
 
     assert_destructive_reset_allowed()
     engine = get_engine()

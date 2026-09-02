@@ -37,7 +37,7 @@ From the monorepo root:
 ```bash
 uv run --directory services/api pytest
 uv run --directory services/api pytest --cov=auth --cov-report=term-missing
-uv run --directory services/api pytest tests/test_inventory.py -v
+uv run --directory services/api pytest tests/test_inventory.py tests/test_telemetry.py -v
 ```
 
 **Coverage target:** ≥ **70%** on the `auth/` package (`uv run pytest --cov=auth`).
@@ -340,6 +340,23 @@ HTTP tests use in-memory SQLite (`inventory_client` fixture). They do **not** re
 uv run --directory services/api pytest tests/test_inventory.py -v
 ```
 
+### Telemetry — `test_telemetry.py` (M6.5 backend)
+
+HTTP tests reuse `inventory_client` (same in-memory SQLite). A missing `eventId` on one item in a well-shaped batch is **200** with `stored`/`rejected`, not 400/422.
+
+| Case | Expect |
+| --- | --- |
+| Two valid events | 200 `{ received: 2, stored: 2, rejected: 0 }`; two rows |
+| One valid + missing `eventId` | 200 `{ received: 2, stored: 1, rejected: 1 }` |
+| Empty `events` | 200 all zeros |
+| Body without `events` / non-array `events` | 400 |
+| All invalid | 200 `stored: 0`; table unchanged |
+| Query DB | `event_type`, `timestamp`, `tags` include `eventId` and allowlisted keys; no `email` |
+
+```bash
+uv run --directory services/api pytest tests/test_telemetry.py -v
+```
+
 ---
 
 ## Regression risks explicitly covered
@@ -522,6 +539,11 @@ See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full 
 - [x] `tests/test_inventory.py` + SQLite `inventory_client` fixture in `conftest.py`
 - [x] Cases I1–I9 (happy / edge / failure per endpoint group)
 - [x] `uv run pytest` passes (includes inventory)
+
+### M6.5 — telemetry storage
+
+- [x] `tests/test_telemetry.py` — partial batch 200, missing `events` 400, tags allowlist / no PII
+- [x] Reuses `inventory_client` SQLite fixture (`telemetry.table` registered in `conftest.py`)
 
 ### M5.5 — inventory UI
 
