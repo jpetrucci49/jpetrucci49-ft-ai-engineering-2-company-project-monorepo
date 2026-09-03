@@ -252,19 +252,19 @@ Insufficient stock → **400** with `Insufficient stock for supply '{name}'. Ava
 
 Rows land in `telemetry_events` on the same SQL engine as inventory (`get_db()`). Fallback DDL: `telemetry/schema.sql`. Set `TELEMETRY_ENDPOINT` in `.env` to match the public URL (the frontend uses `NEXT_PUBLIC_TELEMETRY_ENDPOINT`).
 
-There is no GET/PATCH/PUT/DELETE for telemetry rows.
+`GET /telemetry/report` is **authenticated**. Optional `start_date` / `end_date` (ISO 8601, inclusive start, exclusive end, UTC). Omitted bounds default to the last 7 days. The handler resolves the window, then serves `telemetry.analysis.build_report` through a **60-second** in-memory cache. Metric math is not computed in the route. Response: `{ period, metrics }` with `events_per_day`, `error_rate_by_type`, `latency_by_day`, `auth_failure_rate`. There is no PATCH/PUT/DELETE for telemetry rows.
 
 ### Tests
 
 ```bash
-cd services/api && uv run pytest tests/test_inventory.py tests/test_telemetry.py -v
+cd services/api && uv run pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py -v
 ```
 
 Tests use **in-memory SQLite** (no live Supabase in CI). Postgres-specific dialect behaviour (GIN on `tags`) is not exercised.
 
 ```text
 Browser / curl
-    │  Bearer JWT (inventory) · unauthenticated (telemetry POST)
+    │  Bearer JWT (inventory, telemetry GET) · unauthenticated (telemetry POST)
     ▼
 FastAPI
     ├── get_current_user ──► TinyDB (auth.json)
