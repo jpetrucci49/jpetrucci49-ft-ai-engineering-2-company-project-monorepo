@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 6.5 backend telemetry persistence_
+_Last updated: Milestone 6.5 telemetry operational report_
 
 ## Completed
 
@@ -178,6 +178,13 @@ _Last updated: Milestone 6.5 backend telemetry persistence_
 - [x] `telemetry_events` on the inventory SQL engine; bulk `add_all`; one commit per batch
 - [x] Loose `{ events: [...] }` parse; per-item `TelemetryEvent.model_validate`; HTTP 200 `{ received, stored, rejected }`
 - [x] Allowlisted `tags` + correlation keys; no PHI keys; mapping in `docs/telemetry/telemetry-plan.md` §3.4
+
+### Milestone 6.5 — Telemetry operational report
+
+- [x] Spec: `specs/06.5_TELEM_REPORT_SPECS.md`
+- [x] `telemetry/analysis.py` — SQL window load, Pandas group/agg, `build_report`
+- [x] `GET /telemetry/report` — auth, last-7-days default, 60s in-memory cache
+- [x] Backoffice `/telemetry` + BFF `/api/telemetry/report` (tables only)
 
 ## In progress
 

@@ -37,7 +37,7 @@ From the monorepo root:
 ```bash
 uv run --directory services/api pytest
 uv run --directory services/api pytest --cov=auth --cov-report=term-missing
-uv run --directory services/api pytest tests/test_inventory.py tests/test_telemetry.py -v
+uv run --directory services/api pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py -v
 ```
 
 **Coverage target:** ≥ **70%** on the `auth/` package (`uv run pytest --cov=auth`).
@@ -357,6 +357,27 @@ HTTP tests reuse `inventory_client` (same in-memory SQLite). A missing `eventId`
 uv run --directory services/api pytest tests/test_telemetry.py -v
 ```
 
+### Telemetry report — `test_telemetry_report.py` (M6.5)
+
+Pipeline tests call metric functions on the SQLite `inventory_client` engine. HTTP tests cover auth, the default 7-day window, and the 60s cache.
+
+| Case | Expect |
+| --- | --- |
+| Two types × two UTC days | Four `events_per_day` buckets |
+| `timestamp < end` | Event at `end` absent |
+| UTC day grouping | `23:00Z` and next-day `01:00Z` land on different dates |
+| 1 error + 9 info same type/day | `rate == 0.1` |
+| 1 `login_failed` + 3 `login_succeeded` | `rate == 0.25`; `page_viewed` not in the load |
+| Latency mean | Drops null latency / missing `route_template` |
+| Empty window | All four metric lists `[]` |
+| No token | 401 |
+| Same window twice | `build_report` once within TTL |
+| Bad / inverted dates | 400 |
+
+```bash
+uv run --directory services/api pytest tests/test_telemetry_report.py -v
+```
+
 ---
 
 ## Regression risks explicitly covered
@@ -544,6 +565,11 @@ See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full 
 
 - [x] `tests/test_telemetry.py` — partial batch 200, missing `events` 400, tags allowlist / no PII
 - [x] Reuses `inventory_client` SQLite fixture (`telemetry.table` registered in `conftest.py`)
+
+### M6.5 — telemetry report
+
+- [x] `tests/test_telemetry_report.py` — window bounds, rates, cache TTL, 401
+- [x] Backoffice `/telemetry` + BFF `/api/telemetry/report`
 
 ### M5.5 — inventory UI
 
