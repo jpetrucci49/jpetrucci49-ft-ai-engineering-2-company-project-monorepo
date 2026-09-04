@@ -5,7 +5,7 @@
 **Sources:** [`context/06.5_PIPELINE_CONTEXT.md`](../../context/06.5_PIPELINE_CONTEXT.md), [`context/06.5_CONTEXT.md`](../../context/06.5_CONTEXT.md), live `telemetry_events`.  
 **Out of scope for this design:** changing `GET /telemetry/report`, `services/api/telemetry/analysis.py`, or writing into `telemetry_events`.
 
-This document is the contract for orchestration under `data/pipelines/`, reusable transforms under `data/process/`, and HTTP under `services/api/reporting/` (this monorepo’s API package — not a sibling `services/reporting/`). Services **import** pipeline functions. Pipelines never import FastAPI routers.
+This document is the contract for orchestration under `data/pipelines/`, reusable transforms under `data/process/`, and HTTP under a new **`services/reporting/`** module. In this monorepo that module is `services/api/reporting/` (same pattern as `services/api/telemetry/`). Services **import** pipeline functions. Pipelines never import FastAPI routers. Additive CONTEXT-required fields on existing `event_type`s (e.g. `unit_cost` on `inbound_order_created`) are allowed; this design does not change `GET /telemetry/report` or `telemetry/analysis.py`.
 
 ---
 
@@ -62,11 +62,11 @@ Produce the monthly per-clinic rollup that feeds **Dr. Okonkwo’s (and Claire�
 
 | Item | Decision |
 | --- | --- |
-| System of record | Postgres `telemetry_events` (Supabase), **read-only** |
-| Shape | One row per emission: `timestamp` (timestamptz), `event_type`, `level`, `value` (often `quantity`), `tags` JSONB |
-| How it updates | **Insert-only** from the backoffice flush (≤20 events / 10s). The pipeline never assumes in-place updates of event rows |
-| Other tables | Optional read of a static clinic dimension (see §4.3). Do **not** join patient, incident, or TinyDB user tables |
-| Window | One UTC calendar month: `timestamp >= month_start` AND `timestamp < month_start + 1 month` |
+| Source table | `public.telemetry_events` (Supabase Postgres), **read-only**. No patient tables. |
+| Payload shape | Relational row + JSONB `tags`. Columns used: `timestamp timestamptz`, `event_type text`, `level text`, `value numeric` (often `quantity`), `tags jsonb` holding `clinic_id`, `country`, `product_id`, `product_category`, `quantity`, `department` (outbound/expiry only), and (to add) `unit_cost` or `total_cost` on inbound. Correlation: `eventId`. |
+| How the source updates | **Insert-only** from the backoffice flush (≤20 events / 10s). Existing event rows are never patched. |
+| Cadence of new data | Continuous during clinic hours; pipeline reads a closed UTC month, not the live tail. |
+| Extract window | `timestamp >= month_start AND timestamp < month_start + 1 month` |
 | `event_type` filter | `IN ('inbound_order_created', 'outbound_order_created', 'stock_threshold_triggered', 'supply_expiry_flagged')` — one query |
 | Schedule | Prefect cron after month close (e.g. 06:00 UTC on the 1st) so the pack is ready the first working day; plus manual `POST /reporting/pipeline-runs` |
 
@@ -93,10 +93,10 @@ telemetry_events (read-only)
 
 ```mermaid
 flowchart LR
-  src["telemetry_events<br/>append-only events"]
-  ext["extract_month<br/>SQL window + IN event_type"]
-  trn["transform_clinic_month<br/>Pandas: cost, counts, currency"]
-  dest["reporting.monthly_clinic_supply_performance<br/>unique clinic_id, month_start"]
+  src["telemetry_events<br/>InboundOrder / OutboundOrder events"]
+  ext["extract_month<br/>SQL window + four event_type"]
+  trn["transform_clinic_month<br/>clinic slug, USD/GBP, four KPIs"]
+  dest["reporting.monthly_clinic_supply_performance"]
   log["reporting.pipeline_runs"]
   src --> ext --> trn --> dest
   trn --> log
@@ -183,31 +183,36 @@ Idempotency key: **`(clinic_id, month_start)`**.
 
 ### 5.2 `reporting.pipeline_runs` (execution log)
 
-Not specified in CONTEXT DDL; required for status + audit. One row per flow run.
+Not specified in CONTEXT DDL; required for status + audit. One row per flow run. Minimum fields:
 
-| Field | Why |
-| --- | --- |
-| `id` (uuid) | Correlate API status and Prefect `flow_run_id` |
-| `pipeline_name` | `monthly_clinic_supply_performance` (reuse table for later jobs) |
-| `month_start` | Which board month this run targeted |
-| `started_at` | When work began (SLA / first-working-day) |
-| `finished_at` | When it ended (null while Running) |
-| `status` | `running` \| `completed` \| `failed` — same idea as Prefect states |
-| `records_read` | Rows extracted from `telemetry_events` |
-| `records_written` | Upserted clinic-month rows |
-| `error_message` | Failure text only; **no PHI, no emails, no raw `tags` dumps** |
-| `prefect_flow_run_id` | Optional link to the orchestrator UI |
+| Field | Type | Why it is necessary for audit |
+| --- | --- | --- |
+| `id` | `uuid` | Stable run identifier for `GET /reporting/pipeline-runs/latest` and Prefect correlation |
+| `pipeline_name` | `text` | Distinguishes this job (`monthly_clinic_supply_performance`) when the table is reused |
+| `month_start` | `date` | Which board month was computed — without it a failure cannot be tied to the pack |
+| `started_at` | `timestamptz` | Proves whether the run finished before the first working day SLA |
+| `finished_at` | `timestamptz` (null while running) | Duration and “still Running” detection |
+| `status` | `text` (`running` \| `completed` \| `failed`) | Whether Okonkwo can trust the KPI query for that month |
+| `records_read` | `integer` | Volume extracted from `telemetry_events`; drop vs last month is a capture-gap signal |
+| `records_written` | `integer` | Clinic-month rows upserted; must not grow on an identical retry |
+| `error_message` | `text` (nullable) | Why a Failed run stopped; **no PHI, emails, or raw `tags`** |
+| `prefect_flow_run_id` | `text` (nullable) | Link to the orchestrator UI for the same attempt |
 
 ---
 
 ## 6. Idempotency and failed load
 
-1. **Begin run log** (`status=running`).
-2. Extract + transform in memory (and optional `data/process/` artifact). If this fails, log `failed`; destination unchanged.
-3. **Load:** `INSERT … ON CONFLICT (clinic_id, month_start) DO UPDATE` setting the four KPI columns, `country`, `currency`, `computed_at`. Same clinic-month, same numbers — no second row.
-4. **Complete run log** (`completed` + counts). If the upsert fails mid-batch, Postgres transaction rolls back KPI rows; log `failed`. Re-run repeats extract/transform and upserts the same keys.
+Mechanism: **upsert on `unique (clinic_id, month_start)`** inside **one** Postgres transaction for the KPI table. Counters are replaced, never incremented.
 
-Do not `DELETE FROM reporting.monthly_clinic_supply_performance` for the month unless an explicit backfill flag is set; upsert is enough. Do not increment counters on retry.
+**Second run after a load-phase failure (concrete):**
+
+1. Run A inserts `pipeline_runs` (`status=running`, `month_start=2026-08-01`).
+2. Extract/transform succeed (e.g. 12 clinic-month rows in memory).
+3. `load_clinic_month` starts `INSERT … ON CONFLICT (clinic_id, month_start) DO UPDATE`. The connection drops after some rows are sent. Because the upserts share one transaction, **none of Run A’s KPI writes commit**. `pipeline_runs` is updated to `failed` with `error_message` (best-effort; if that also fails, Prefect Failed + a stale `running` row is closed on the next start by setting it `failed`).
+4. **Run B** (retry, same `month_start`): extract/transform again from `telemetry_events` (append-only, same `eventId`s → same aggregates after dedupe). Load upserts the same `(clinic_id, month_start)` keys. If Run A committed nothing, Run B inserts. If a previous **successful** run already had August rows, Run B **overwrites** those four KPI columns and `computed_at` — it does not add 340+340 consumption or duplicate `austin-north` / `2026-08-01`.
+5. `records_written` on Run B equals the clinic-month cardinality (≤12), not “previous plus new”.
+
+Do not `DELETE FROM reporting.monthly_clinic_supply_performance` for the month unless an explicit backfill flag is set. Do not `total_supply_cost = total_supply_cost + EXCLUDED.total_supply_cost`.
 
 Clinics with **zero** events in the month: v1 **omits** them (same as the technical report’s empty days). A later backfill flow may emit zeros for all 12 clinics if Okonkwo wants a complete grid.
 
@@ -252,13 +257,15 @@ Do not store the pooler password in the repo. The worker uses the Prefect block;
 
 ## 8. Application integration (design only)
 
-New module **`services/api/reporting/`**, mounted in `app/main.py`. Separate from `services/api/telemetry/`. All three routes authenticated (`get_current_user`). No Pandas in routers.
+New **`services/reporting/`** module (repo path `services/api/reporting/`), mounted in `app/main.py`. Separate from `services/telemetry/` / `services/api/telemetry/` and from `GET /telemetry/report`. All three routes authenticated (`get_current_user`). No Pandas or SQL for KPIs in the router — only imports from `data/pipelines/`.
 
-| Endpoint | Role | Calls (in `data/pipelines/`) |
+| Endpoint | Role | Import from `data/pipelines/` |
 | --- | --- | --- |
-| `GET /reporting/monthly-clinic-supply-performance` | KPI query for the board pack / later dashboard | `query_monthly_clinic_supply_performance(month_start)` — **read** destination; default = most recent `month_start` in the table |
-| `GET /reporting/pipeline-runs/latest` | Status of the last run | `get_latest_pipeline_run(pipeline_name=...)` |
-| `POST /reporting/pipeline-runs` | Manual trigger (`month_start` optional in body) | `run_monthly_clinic_supply_performance(month_start)` (Prefect deployment in prod; direct call in local/dev) |
+| `GET /reporting/monthly-clinic-supply-performance` | **KPI query** (dashboard / board pack) | `monthly_clinic_supply_performance.queries.query_monthly_clinic_supply_performance` |
+| `GET /reporting/pipeline-runs/latest` | **Status query** | `monthly_clinic_supply_performance.queries.get_latest_pipeline_run` |
+| `POST /reporting/pipeline-runs` | **Manual trigger** (`month_start` optional) | `monthly_clinic_supply_performance.flow.run_monthly_clinic_supply_performance` |
+
+KPI query default `month_start` = latest month present in `reporting.monthly_clinic_supply_performance`. Manual trigger in production wraps the Prefect deployment; locally it calls the flow function. No ETL in the router.
 
 KPI response shape (CONTEXT):
 
@@ -309,3 +316,23 @@ services/api/reporting/
 - Aggregate at **clinic** (and later department), never person.
 - Pipeline **reads** `telemetry_events` only; never writes it.
 - Do not modify `GET /telemetry/report` or `telemetry/analysis.py`.
+- Do not write pipeline output into `telemetry_events`.
+
+---
+
+## 10. Requirements scan
+
+| Requirement | Where |
+| --- | --- |
+| `data/pipelines/PIPELINE_DESIGN.md` exists | this file |
+| Current State + gap vs technical report | §1 |
+| Extraction format (tables, shape, cadence) | §3 |
+| One-sentence purpose + CONTEXT KPIs | §2 |
+| No change to telemetry report; output in `reporting.*`; `services/reporting/` | intro, §5, §8–9 |
+| ETL diagram with HealthCore names | §4 |
+| Updates to existing records | §4.3 upsert `(clinic_id, month_start)` |
+| Second run after failed load | §6 |
+| Execution log ≥5 fields, type, why | §5.2 |
+| One flow + three named tasks | §7.1 `monthly_clinic_supply_performance` / `extract_month` / `transform_clinic_month` / `load_clinic_month` |
+| Three reporting endpoints + pipeline imports | §8 |
+| Mandatory telemetry `event_type`s | §1.1, §3, §4.1 |
