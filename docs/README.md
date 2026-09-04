@@ -13,5 +13,6 @@ This folder holds **cross-cutting documentation** for the monorepo: architecture
 
 - [telemetry/telemetry-plan.md](./telemetry/telemetry-plan.md) — Telemetry Plan (catalogue, envelope, delivery)
 - [telemetry/event-schemas.json](./telemetry/event-schemas.json) — Event envelope and per-type JSON Schema (draft-07)
+- [../data/pipelines/PIPELINE_DESIGN.md](../data/pipelines/PIPELINE_DESIGN.md) — Monthly clinic supply performance pipeline (design)
 
 > _Spanish version: [README.es.md](./README.es.md)._

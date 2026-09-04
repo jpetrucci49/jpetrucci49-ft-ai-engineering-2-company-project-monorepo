@@ -1,6 +1,6 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: Milestone 6.5 telemetry operational report_
+_Last updated: Monthly clinic supply performance pipeline design_
 
 ## Completed
 
@@ -185,6 +185,11 @@ _Last updated: Milestone 6.5 telemetry operational report_
 - [x] `telemetry/analysis.py` — SQL window load, Pandas group/agg, `build_report`
 - [x] `GET /telemetry/report` — auth, last-7-days default, 60s in-memory cache
 - [x] Backoffice `/telemetry` + BFF `/api/telemetry/report` (tables only)
+
+### Data pipelines — Monthly Clinic Supply Performance (design)
+
+- [x] Spec context: `context/06.5_PIPELINE_CONTEXT.md`
+- [x] `data/pipelines/PIPELINE_DESIGN.md` — extract/transform/load, `reporting.monthly_clinic_supply_performance`, Prefect mapping, `services/api/reporting/` endpoints (not implemented yet)
 
 ## In progress
 

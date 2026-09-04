@@ -13,6 +13,7 @@
 ├── src/                  # M2 TypeScript utilities and types
 ├── scripts/              # Python helper scripts (M5 incident analysis)
 ├── services/api/         # FastAPI internal API (M5 incidents, M6 suppliers, M7 auth)
+├── data/                 # Pipelines (orchestration), process (transforms), raw, eval
 ├── pyproject.toml        # Python dependencies (uv)
 ├── uv.lock               # Locked Python dependency versions
 ├── tests/utils/          # Vitest suites and shared fixtures
@@ -47,6 +48,7 @@
 11. **M5.5 inventory** — SQLModel + psycopg3 (`postgresql+psycopg://` in `SUPABASE_DATABASE_URL`) on Postgres/SQLite; TinyDB auth unchanged; `user_uuid` copied from JWT; `current_stock` aggregated, never stored. FastAPI under `/inventory`. Backoffice UI at `/inventory/products` and `/inventory/orders*`; BFF `app/api/inventory/*` via `INVENTORY_API_URL` (default `http://127.0.0.1:8000`); client never calls `:8000`.
 12. **M13 Docker Compose** — `ui` (website + backoffice, `next dev`) and `api` (Uvicorn `--reload`) on network `healthcore`. Bind-mount source for hot reload; named volumes for `node_modules` and `.next` so host caches do not overlay the container. In Docker, BFF targets are `http://api:8000`; browser/`NEXT_PUBLIC_*`/CORS/`PASSWORD_RESET_URL` stay on `localhost`. Root `.env` feeds both services; native app `.env.example` files still use loopback.
 13. **M6.5 telemetry** — Backoffice `lib/telemetry/` queues events and POSTs `{ events: [...] }` to `NEXT_PUBLIC_TELEMETRY_ENDPOINT`. FastAPI `POST /telemetry/events` is unauthenticated, validates each envelope independently, and bulk-inserts valid rows into `telemetry_events` (same SQLModel engine as inventory). Response `{ received, stored, rejected }`. `GET /telemetry/report` is authenticated: the route resolves the UTC window (default last 7 days), caches `build_report` for 60s, and does not compute metrics itself. Pipeline: SQL load → Pandas refine/convert/`groupby`. Backoffice `/telemetry` proxies via `/api/telemetry/report`. All UI capture goes through `track()`.
+14. **Monthly clinic supply performance (design)** — Orchestration will live in `data/pipelines/`; transforms in `data/process/`; HTTP in `services/api/reporting/` importing those modules. Destination is `reporting.monthly_clinic_supply_performance`, not `telemetry_events`. See `data/pipelines/PIPELINE_DESIGN.md`. `GET /telemetry/report` stays engineering-only.
 
 ## Technical constraints
 
