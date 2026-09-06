@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import date
 from typing import Any
+
+import pytest
+
+from data.pipelines.paths import ensure_import_paths
+
+ensure_import_paths()
+
+from prefect.testing.utilities import prefect_test_harness
 
 from data.pipelines.monthly_clinic_supply_performance.flow import (
     run_monthly_clinic_supply_performance,
@@ -16,6 +25,13 @@ from data.process.inbound_cost import inbound_event_cost
 from inventory.database import get_engine
 from sqlmodel import Session, select
 from telemetry.table import TelemetryEventRow
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _prefect_test_runtime() -> Iterator[None]:
+    """Own the ephemeral Prefect API so it stops before pytest closes stdout."""
+    with prefect_test_harness():
+        yield
 
 
 def _event(**overrides: Any) -> dict[str, Any]:

@@ -2,8 +2,20 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
+from pathlib import Path
 from unittest.mock import patch
+
+# Prefect reads PREFECT_HOME at first import. Point it at the repo before
+# reporting tests pull in prefect.testing / the pipeline flow.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_PREFECT_HOME = _REPO_ROOT / ".prefect"
+_PREFECT_HOME.mkdir(parents=True, exist_ok=True)
+(_PREFECT_HOME / "storage").mkdir(parents=True, exist_ok=True)
+os.environ["PREFECT_HOME"] = str(_PREFECT_HOME)
+os.environ["PREFECT_RESULTS_LOCAL_STORAGE_PATH"] = str(_PREFECT_HOME / "storage")
+os.environ.setdefault("PREFECT_CLI_PROMPT", "false")
 
 import auth.database as auth_database
 import database as suppliers_database

@@ -126,9 +126,21 @@ def query_telemetry_events(month_start: date) -> list[dict[str, Any]]:
 
     start, end = month_window(month_start)
     placeholders = ", ".join(f":t{i}" for i in range(len(SOURCE_EVENT_TYPES)))
+    # SQLite: bind naive UTC strings so we never hit Python 3.12's deprecated
+    # default datetime adapter. Postgres accepts aware datetime values.
+    if engine.dialect.name == "sqlite":
+        start_bound: Any = (
+            start.astimezone(timezone.utc).replace(tzinfo=None).isoformat(sep=" ")
+        )
+        end_bound: Any = (
+            end.astimezone(timezone.utc).replace(tzinfo=None).isoformat(sep=" ")
+        )
+    else:
+        start_bound = start
+        end_bound = end
     params: dict[str, Any] = {
-        "start": start,
-        "end": end,
+        "start": start_bound,
+        "end": end_bound,
     }
     for index, event_type in enumerate(SOURCE_EVENT_TYPES):
         params[f"t{index}"] = event_type

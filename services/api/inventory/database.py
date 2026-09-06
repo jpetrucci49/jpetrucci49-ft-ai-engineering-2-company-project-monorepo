@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import os
 import re
+import sqlite3
 from collections.abc import Generator
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import event
@@ -107,9 +109,26 @@ def _engine_kwargs(url: str) -> dict:
     return kwargs
 
 
+def _register_sqlite3_datetime_adapters() -> None:
+    """Replace Python 3.12's deprecated default date/datetime sqlite3 adapters."""
+
+    def adapt_date(value: date) -> str:
+        return value.isoformat()
+
+    def adapt_datetime(value: datetime) -> str:
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value.isoformat(sep=" ", timespec="microseconds")
+
+    sqlite3.register_adapter(date, adapt_date)
+    sqlite3.register_adapter(datetime, adapt_datetime)
+
+
 def _enable_sqlite_foreign_keys(engine: Engine) -> None:
     if engine.dialect.name != "sqlite":
         return
+
+    _register_sqlite3_datetime_adapters()
 
     @event.listens_for(engine, "connect")
     def _set_sqlite_pragma(dbapi_connection, _connection_record) -> None:  # type: ignore[no-untyped-def]
