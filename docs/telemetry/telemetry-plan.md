@@ -273,8 +273,10 @@ Fires on `201` from `POST /inventory/orders/inbound`.
 | `vendor_name` | string | yes | Vendor (needed for purchasing consolidation) |
 | `order_id` | integer | yes | `SupplyDelivery.id` |
 | `sku` | string | no | Catalogue code for joins |
+| `unit_cost` | number | no | Per-unit supply cost (pipeline: quantity × unit_cost) |
+| `total_cost` | number | no | Line-item supply cost when the vendor invoice is already totaled |
 
-Sensitive: no. `department` omitted (not applicable).
+Sensitive: no. `department` omitted (not applicable). Cost is a supply amount, never a patient field.
 
 #### `outbound_order_created` — mandatory · inventory · stream
 

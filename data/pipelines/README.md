@@ -9,6 +9,7 @@ Each subfolder or file under `data/pipelines/` should represent **one pipeline o
 
 ## HealthCore pipelines
 
-- [PIPELINE_DESIGN.md](./PIPELINE_DESIGN.md) — Monthly Clinic Supply Performance (Okonkwo / Claire board pack). Design only; Prefect implementation follows.
+- [PIPELINE_DESIGN.md](./PIPELINE_DESIGN.md) — Monthly Clinic Supply Performance (Okonkwo / Claire board pack). Prefect 3 flow `monthly_clinic_supply_performance`.
+- Entry: `python data/pipelines/pipeline.py` (cron `0 6 1 * *` — 06:00 UTC on the 1st).
 
 > _Spanish version: [README.es.md](./README.es.md)._

@@ -254,17 +254,29 @@ Rows land in `telemetry_events` on the same SQL engine as inventory (`get_db()`)
 
 `GET /telemetry/report` is **authenticated**. Optional `start_date` / `end_date` (ISO 8601, inclusive start, exclusive end, UTC). Omitted bounds default to the last 7 days. The handler resolves the window, then serves `telemetry.analysis.build_report` through a **60-second** in-memory cache. Metric math is not computed in the route. Response: `{ period, metrics }` with `events_per_day`, `error_rate_by_type`, `latency_by_day`, `auth_failure_rate`. There is no PATCH/PUT/DELETE for telemetry rows.
 
+### Reporting (Monthly Clinic Supply Performance)
+
+Prefect 3 pipeline in `data/pipelines/`. HTTP lives in `reporting/` (not `telemetry/`) and **imports** the flow/queries — it does not reimplement ETL. Does not write `telemetry_events` and does not change `GET /telemetry/report`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/reporting/monthly-clinic-supply-performance` | KPI rows (`clinic_id` slug, USD/GBP side by side). Optional `month_start` |
+| `GET` | `/reporting/pipeline-runs/latest` | Last run metadata (start/end, counts, status, errors) |
+| `POST` | `/reporting/pipeline-runs` | Manual flow run (`month_start` optional) |
+
+All three require a bearer token. CLI: `uv run python data/pipelines/pipeline.py` (schedule: 06:00 UTC on the 1st).
+
 ### Tests
 
 ```bash
-cd services/api && uv run pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py -v
+cd services/api && uv run pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py tests/test_reporting.py -v
 ```
 
 Tests use **in-memory SQLite** (no live Supabase in CI). Postgres-specific dialect behaviour (GIN on `tags`) is not exercised.
 
 ```text
 Browser / curl
-    │  Bearer JWT (inventory, telemetry GET) · unauthenticated (telemetry POST)
+    │  Bearer JWT (inventory, telemetry GET, reporting) · unauthenticated (telemetry POST)
     ▼
 FastAPI
     ├── get_current_user ──► TinyDB (auth.json)
@@ -273,7 +285,8 @@ FastAPI
               ├── MedicalSupply
               ├── SupplyDelivery
               ├── SupplyConsumption
-              └── TelemetryEventRow (telemetry_events)
+              ├── TelemetryEventRow (telemetry_events)
+              └── reporting.monthly_clinic_supply_performance / pipeline_runs
 ```
 
 ## Incident analysis (M5)
@@ -374,6 +387,8 @@ services/api/
   routes/               ← auth, users, profiles, suppliers
   app/incidents/        ← csv_validation, analysis (M5), manager (M11)
   inventory/            ← SQLModel inventory (M5.5) — models, schemas, service, router
+  telemetry/            ← Event ingest + engineering report (do not use for clinic KPIs)
+  reporting/            ← Monthly clinic supply KPIs (imports data/pipelines/)
   incidents_database.py ← Incident manager TinyDB
   models.py             ← Supplier Pydantic models
   database.py           ← Supplier TinyDB

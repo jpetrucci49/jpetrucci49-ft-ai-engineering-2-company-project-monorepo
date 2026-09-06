@@ -37,6 +37,8 @@ PROPERTY_ALLOWLISTS: dict[str, frozenset[str]] = {
             "vendor_name",
             "order_id",
             "sku",
+            "unit_cost",
+            "total_cost",
         }
     ),
     "outbound_order_created": frozenset(

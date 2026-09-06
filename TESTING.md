@@ -37,7 +37,7 @@ From the monorepo root:
 ```bash
 uv run --directory services/api pytest
 uv run --directory services/api pytest --cov=auth --cov-report=term-missing
-uv run --directory services/api pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py -v
+uv run --directory services/api pytest tests/test_inventory.py tests/test_telemetry.py tests/test_telemetry_report.py tests/test_reporting.py -v
 ```
 
 **Coverage target:** ≥ **70%** on the `auth/` package (`uv run pytest --cov=auth`).
@@ -378,6 +378,24 @@ Pipeline tests call metric functions on the SQLite `inventory_client` engine. HT
 uv run --directory services/api pytest tests/test_telemetry_report.py -v
 ```
 
+### Reporting pipeline — `test_reporting.py`
+
+Clinic-month KPIs for Dr. Okonkwo. Does not use `GET /telemetry/report`.
+
+| Case | Expect |
+| --- | --- |
+| Transform | `eventId` dedupe; slug `austin-north`; USD/GBP not mixed |
+| Missing inbound cost | Contributes 0 |
+| No token | 401 on all three `/reporting/*` routes |
+| Empty month | `{ month_start, clinics: [] }` |
+| POST twice same month | Same KPI rows; `records_written` is clinic cardinality |
+| Eval snapshot failure | Load still completes (`return_state=True`) |
+
+```bash
+uv run --directory services/api pytest tests/test_reporting.py -v
+uv run python data/pipelines/pipeline.py --month-start 2026-08-01
+```
+
 ---
 
 ## Regression risks explicitly covered
@@ -570,6 +588,11 @@ See [`scripts/README.md`](scripts/README.md#exit-codes-and-errors) for the full 
 
 - [x] `tests/test_telemetry_report.py` — window bounds, rates, cache TTL, 401
 - [x] Backoffice `/telemetry` + BFF `/api/telemetry/report`
+
+### Monthly clinic supply performance pipeline
+
+- [x] `tests/test_reporting.py` — KPI transform, idempotent upsert, auth, CONTEXT response shape
+- [x] CLI: `uv run python data/pipelines/pipeline.py`
 
 ### M5.5 — inventory UI
 

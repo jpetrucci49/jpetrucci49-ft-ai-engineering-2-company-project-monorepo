@@ -189,7 +189,15 @@ _Last updated: Monthly clinic supply performance pipeline design_
 ### Data pipelines — Monthly Clinic Supply Performance (design)
 
 - [x] Spec context: `context/06.5_PIPELINE_CONTEXT.md`
-- [x] `data/pipelines/PIPELINE_DESIGN.md` — extract/transform/load, `reporting.monthly_clinic_supply_performance`, Prefect mapping, `services/api/reporting/` endpoints (not implemented yet)
+- [x] `data/pipelines/PIPELINE_DESIGN.md` — extract/transform/load, `reporting.monthly_clinic_supply_performance`, Prefect mapping, `services/api/reporting/` endpoints
+
+### Data pipelines — Monthly Clinic Supply Performance (implementation)
+
+- [x] Prefect 3 flow `monthly_clinic_supply_performance` — tasks `extract_month`, `transform_clinic_month` (cached 6h), `load_clinic_month` (upsert), optional `write_eval_snapshot` (`return_state=True`)
+- [x] CLI: `python data/pipelines/pipeline.py` — schedule 06:00 UTC on the 1st
+- [x] Destination `reporting.monthly_clinic_supply_performance` + `reporting.pipeline_runs` (never writes `telemetry_events`)
+- [x] `services/api/reporting/` — `GET` KPIs, `GET` latest run, `POST` trigger; imports from `data/pipelines/`
+- [x] Additive `unit_cost` / `total_cost` on `inbound_order_created` allowlist (not `telemetry/analysis.py`)
 
 ## In progress
 
