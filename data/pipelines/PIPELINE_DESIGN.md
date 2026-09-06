@@ -1,6 +1,6 @@
 # HealthCore — Monthly Clinic Supply Performance pipeline (design)
 
-**Status:** Design only — Prefect mapping is conceptual; implementation follows in later parts.  
+**Status:** Implemented (Prefect 3). CLI: `python data/pipelines/pipeline.py`. Schedule: 06:00 UTC on the 1st.  
 **Deliverable:** Dr. Okonkwo’s **Monthly Clinic Supply Performance Report**.  
 **Sources:** [`context/06.5_PIPELINE_CONTEXT.md`](../../context/06.5_PIPELINE_CONTEXT.md), [`context/06.5_CONTEXT.md`](../../context/06.5_CONTEXT.md), live `telemetry_events`.  
 **Out of scope for this design:** changing `GET /telemetry/report`, `services/api/telemetry/analysis.py`, or writing into `telemetry_events`.
@@ -68,7 +68,8 @@ Produce the monthly per-clinic rollup that feeds **Dr. Okonkwo’s (and Claire�
 | Cadence of new data | Continuous during clinic hours; pipeline reads a closed UTC month, not the live tail. |
 | Extract window | `timestamp >= month_start AND timestamp < month_start + 1 month` |
 | `event_type` filter | `IN ('inbound_order_created', 'outbound_order_created', 'stock_threshold_triggered', 'supply_expiry_flagged')` — one query |
-| Schedule | Prefect cron after month close (e.g. 06:00 UTC on the 1st) so the pack is ready the first working day; plus manual `POST /reporting/pipeline-runs` |
+| Schedule | Prefect cron `0 6 1 * *` (06:00 UTC on the 1st) so the pack is ready the first working day; plus manual `POST /reporting/pipeline-runs` |
+| Run command | `python data/pipelines/pipeline.py` (optional `--month-start YYYY-MM-DD`). From the repo root with Prefect 3 installed (`uv sync && uv run python data/pipelines/pipeline.py`). |
 
 Raw dumps for eval/fixtures may later land in `data/raw/`; production extract always hits Postgres.
 
@@ -255,7 +256,7 @@ Do not store the pooler password in the repo. The worker uses the Prefect block;
 
 ---
 
-## 8. Application integration (design only)
+## 8. Application integration
 
 New **`services/reporting/`** module (repo path `services/api/reporting/`), mounted in `app/main.py`. Separate from `services/telemetry/` / `services/api/telemetry/` and from `GET /telemetry/report`. All three routes authenticated (`get_current_user`). No Pandas or SQL for KPIs in the router — only imports from `data/pipelines/`.
 
@@ -288,7 +289,7 @@ KPI response shape (CONTEXT):
 
 US and UK clinics appear **side by side**. The API must not add a mixed-currency total.
 
-### 8.1 Proposed tree (implementation later)
+### 8.1 Tree
 
 ```text
 data/pipelines/monthly_clinic_supply_performance/

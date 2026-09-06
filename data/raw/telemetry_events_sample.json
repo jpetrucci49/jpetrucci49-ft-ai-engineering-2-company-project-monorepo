@@ -1,0 +1,213 @@
+{
+  "description": "Synthetic HealthCore telemetry for pipeline eval. No PHI. August 2026 unless noted.",
+  "events": [
+    {
+      "timestamp": "2026-08-04T14:00:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 10,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "product_id": 11,
+        "product_category": "ppe",
+        "quantity": 10,
+        "unit_cost": 12.5,
+        "eventId": "aaaaaaaa-0001-4111-8111-000000000001"
+      }
+    },
+    {
+      "timestamp": "2026-08-04T14:01:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 10,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "product_id": 11,
+        "product_category": "ppe",
+        "quantity": 10,
+        "unit_cost": 12.5,
+        "eventId": "aaaaaaaa-0001-4111-8111-000000000001"
+      }
+    },
+    {
+      "timestamp": "2026-08-12T09:30:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 4,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "product_id": 12,
+        "product_category": "medication",
+        "quantity": 4,
+        "unit_cost": 20,
+        "eventId": "aaaaaaaa-0002-4111-8111-000000000002"
+      }
+    },
+    {
+      "timestamp": "2026-08-05T16:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 2,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "department": "general_consultation",
+        "eventId": "aaaaaaaa-0003-4111-8111-000000000003"
+      }
+    },
+    {
+      "timestamp": "2026-08-15T11:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 1,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "department": "chronic_care",
+        "eventId": "aaaaaaaa-0004-4111-8111-000000000004"
+      }
+    },
+    {
+      "timestamp": "2026-08-20T11:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 3,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "department": "pharmacy",
+        "eventId": "aaaaaaaa-0005-4111-8111-000000000005"
+      }
+    },
+    {
+      "timestamp": "2026-08-18T08:00:00+00:00",
+      "event_type": "stock_threshold_triggered",
+      "value": 4,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "threshold_kind": "low",
+        "eventId": "aaaaaaaa-0006-4111-8111-000000000006"
+      }
+    },
+    {
+      "timestamp": "2026-08-08T07:00:00+00:00",
+      "event_type": "supply_expiry_flagged",
+      "value": 6,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "days_to_expiry": 12,
+        "eventId": "aaaaaaaa-0007-4111-8111-000000000007"
+      }
+    },
+    {
+      "timestamp": "2026-08-22T07:00:00+00:00",
+      "event_type": "supply_expiry_flagged",
+      "value": 2,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "days_to_expiry": 5,
+        "eventId": "aaaaaaaa-0008-4111-8111-000000000008"
+      }
+    },
+    {
+      "timestamp": "2026-08-06T10:00:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 8,
+      "tags": {
+        "clinic_id": 10,
+        "country": "UK",
+        "product_id": 21,
+        "quantity": 8,
+        "total_cost": 24,
+        "eventId": "bbbbbbbb-0001-4111-8111-000000000001"
+      }
+    },
+    {
+      "timestamp": "2026-08-09T10:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 1,
+      "tags": {
+        "clinic_id": 10,
+        "country": "UK",
+        "department": "specialty_care",
+        "eventId": "bbbbbbbb-0002-4111-8111-000000000002"
+      }
+    },
+    {
+      "timestamp": "2026-08-19T10:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 2,
+      "tags": {
+        "clinic_id": 10,
+        "country": "UK",
+        "department": "chronic_disease_management",
+        "eventId": "bbbbbbbb-0003-4111-8111-000000000003"
+      }
+    },
+    {
+      "timestamp": "2026-08-21T09:00:00+00:00",
+      "event_type": "supply_expiry_flagged",
+      "value": 1,
+      "tags": {
+        "clinic_id": 10,
+        "country": "UK",
+        "days_to_expiry": 20,
+        "eventId": "bbbbbbbb-0004-4111-8111-000000000004"
+      }
+    },
+    {
+      "timestamp": "2026-08-03T12:00:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 5,
+      "tags": {
+        "clinic_id": 3,
+        "country": "US",
+        "quantity": 5,
+        "eventId": "cccccccc-0001-4111-8111-000000000001"
+      }
+    },
+    {
+      "timestamp": "2026-08-11T12:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 1,
+      "tags": {
+        "clinic_id": 3,
+        "country": "US",
+        "department": "general_consultation",
+        "eventId": "cccccccc-0002-4111-8111-000000000002"
+      }
+    },
+    {
+      "timestamp": "2026-08-07T12:00:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 9,
+      "tags": {
+        "clinic_id": 99,
+        "country": "US",
+        "unit_cost": 10,
+        "eventId": "dddddddd-0001-4111-8111-000000000001"
+      }
+    },
+    {
+      "timestamp": "2026-08-07T13:00:00+00:00",
+      "event_type": "inbound_order_created",
+      "value": 2,
+      "tags": {
+        "clinic_id": 2,
+        "country": "UK",
+        "unit_cost": 99,
+        "eventId": "dddddddd-0002-4111-8111-000000000002"
+      }
+    },
+    {
+      "timestamp": "2026-07-15T12:00:00+00:00",
+      "event_type": "outbound_order_created",
+      "value": 50,
+      "tags": {
+        "clinic_id": 2,
+        "country": "US",
+        "eventId": "eeeeeeee-0001-4111-8111-000000000001"
+      }
+    }
+  ]
+}

@@ -4,6 +4,9 @@ services:
       context: ./services
     volumes:
       - ./services/api:/app
+      - ./data:/opt/healthcore/data
+    environment:
+      HEALTHCORE_REPO_ROOT: /opt/healthcore
     ports:
       - "8000:8000"
     env_file:

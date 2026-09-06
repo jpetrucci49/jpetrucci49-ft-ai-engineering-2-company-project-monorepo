@@ -10,6 +10,8 @@ const ALLOWLISTS: Record<TelemetryEventType, readonly string[]> = {
     "vendor_name",
     "order_id",
     "sku",
+    "unit_cost",
+    "total_cost",
   ],
   outbound_order_created: [
     "clinic_id",

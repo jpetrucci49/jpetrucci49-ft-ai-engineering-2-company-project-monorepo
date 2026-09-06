@@ -11,6 +11,7 @@ from app.incidents.router import router as incidents_router
 from auth.config import get_jwt_secret, validate_password_reset_config
 from inventory.database import init_inventory_schema
 from inventory.router import router as inventory_router
+from reporting.router import router as reporting_router
 from routes.auth import router as auth_router
 from routes.profiles import router as profiles_router
 from routes.suppliers import router as suppliers_router
@@ -23,6 +24,13 @@ async def lifespan(_: FastAPI):
     get_jwt_secret()
     validate_password_reset_config()
     init_inventory_schema()
+    from inventory.database import _engine
+    from data.pipelines.monthly_clinic_supply_performance.db import (
+        ensure_reporting_schema,
+    )
+
+    if _engine is not None:
+        ensure_reporting_schema()
     yield
 
 
@@ -73,6 +81,7 @@ app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
+app.include_router(reporting_router)
 
 
 @app.get("/health", include_in_schema=False)

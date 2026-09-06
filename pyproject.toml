@@ -5,6 +5,10 @@ description = "HealthCore monorepo — Python scripts for data analysis and auto
 requires-python = ">=3.12"
 dependencies = [
     "pandas>=3.0.5",
+    "prefect>=3,<4",
+    "psycopg[binary]>=3.3.4",
+    "sqlalchemy>=2",
+    "sqlmodel>=0.0.39",
 ]
 
 [tool.uv]
