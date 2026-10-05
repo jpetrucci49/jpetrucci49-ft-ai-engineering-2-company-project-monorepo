@@ -104,5 +104,31 @@
         </ul>
       </div>
     </main>
+    <script>
+      (function () {
+        var match = location.hostname.match(/^(.*)-\d+(\.app\.github\.dev)$/i);
+        if (!match) return;
+        var scheme = location.protocol === "http:" ? "http:" : "https:";
+        document.querySelectorAll("a[href]").forEach(function (anchor) {
+          var url;
+          try {
+            url = new URL(anchor.getAttribute("href"), location.href);
+          } catch (error) {
+            return;
+          }
+          if (url.hostname !== "localhost" && url.hostname !== "127.0.0.1") return;
+          anchor.href =
+            scheme +
+            "//" +
+            match[1] +
+            "-" +
+            url.port +
+            match[2] +
+            url.pathname +
+            url.search +
+            url.hash;
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -181,6 +181,19 @@ def test_guard_output_phi() -> None:
     assert "johnson" not in text.casefold()
 
 
+def test_guard_output_keeps_policy_that_mentions_a_patient() -> None:
+    policy = (
+        "A private-pay patient who cancels less than 24 hours before a clinic visit "
+        "is charged 50 USD. Medicare patients are not charged."
+    )
+    text, hit = apply_output_guard(
+        policy,
+        run_id="aa888888-8888-4888-8888-000000000002",
+    )
+    assert hit is None
+    assert text == policy
+
+
 def test_guard_observe_counts() -> None:
     before = summary()
     run_desk_agent(JAILBREAKS[0], run_id="aa999999-9999-4999-8999-000000000001")

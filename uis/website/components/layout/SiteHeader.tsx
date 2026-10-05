@@ -1,19 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
-import { appUrls, backofficeUtilitiesUrl } from "@healthcore/navigation";
+import { appUrls, backofficeUtilitiesUrl, rewriteAppUrls } from "@healthcore/navigation";
 
 export function SiteHeader() {
   const { lang, setLang, t } = useLanguage();
+  const [urls, setUrls] = useState(appUrls);
+  useEffect(() => {
+    setUrls(rewriteAppUrls(appUrls, window.location.hostname, window.location.protocol));
+  }, []);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks: { href: string; label: string; external?: boolean }[] = [
     { href: "/", label: t.nav.home },
     { href: "/application", label: t.nav.application },
-    { href: backofficeUtilitiesUrl(appUrls.backoffice), label: t.nav.utilities, external: true },
-    { href: appUrls.tracker, label: t.nav.tracker, external: true },
+    { href: backofficeUtilitiesUrl(urls.backoffice), label: t.nav.utilities, external: true },
+    { href: urls.tracker, label: t.nav.tracker, external: true },
   ];
 
   return (
