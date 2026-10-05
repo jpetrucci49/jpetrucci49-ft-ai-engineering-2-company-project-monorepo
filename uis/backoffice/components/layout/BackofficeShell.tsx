@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { buildAuthenticatedAppUrl } from "@healthcore/auth";
-import { appUrls, crossAppNav, crossAppNavLabels } from "@healthcore/navigation";
+import { appUrls, crossAppNav, crossAppNavLabels, rewriteAppUrls } from "@healthcore/navigation";
 
 const navItems = [
   { href: "/", label: "Dashboard" },
@@ -22,12 +23,15 @@ const navItems = [
   { href: "/account/profile", label: "Account" },
 ] as const;
 
-const crossAppLinks = [
-  { href: appUrls.website, label: crossAppNavLabels.publicSite, authenticated: false },
-  { href: appUrls.tracker, label: crossAppNavLabels.talentPipeline, authenticated: true },
-] as const;
-
 export function BackofficeShell({ children }: { children: React.ReactNode }) {
+  const [urls, setUrls] = useState(appUrls);
+  useEffect(() => {
+    setUrls(rewriteAppUrls(appUrls, window.location.hostname, window.location.protocol));
+  }, []);
+  const crossAppLinks = [
+    { href: urls.website, label: crossAppNavLabels.publicSite, authenticated: false },
+    { href: urls.tracker, label: crossAppNavLabels.talentPipeline, authenticated: true },
+  ];
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="border-b border-slate-200 bg-slate-900 text-white">

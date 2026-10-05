@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useFilterReset } from "@/components/layout/FilterResetProvider";
 import { buildAuthenticatedAppUrl } from "@healthcore/auth";
@@ -9,19 +10,23 @@ import {
   backofficeUtilitiesUrl,
   crossAppNav,
   crossAppNavLabels,
+  rewriteAppUrls,
 } from "@healthcore/navigation";
-
-const crossAppLinks = [
-  { href: appUrls.website, label: crossAppNavLabels.publicSite, authenticated: false },
-  {
-    href: backofficeUtilitiesUrl(appUrls.backoffice),
-    label: crossAppNavLabels.utilities,
-    authenticated: true,
-  },
-] as const;
 
 export function AppHeader() {
   const { clearAllFilters } = useFilterReset();
+  const [urls, setUrls] = useState(appUrls);
+  useEffect(() => {
+    setUrls(rewriteAppUrls(appUrls, window.location.hostname, window.location.protocol));
+  }, []);
+  const crossAppLinks = [
+    { href: urls.website, label: crossAppNavLabels.publicSite, authenticated: false },
+    {
+      href: backofficeUtilitiesUrl(urls.backoffice),
+      label: crossAppNavLabels.utilities,
+      authenticated: true,
+    },
+  ];
 
   const handleAllCandidatesClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { getToken } from "@healthcore/auth";
 import {
@@ -89,6 +89,14 @@ export function DeskKnowledgePage() {
     };
   }, []);
 
+  function onQuestionKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) {
+      return;
+    }
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = question.trim();
@@ -102,6 +110,15 @@ export function DeskKnowledgePage() {
       : { event: "user_message", data: { session_id: sessionId, text } };
     generatingRef.current = true;
     socket.send(JSON.stringify(payload));
+    setMessages((current) => [
+      ...current,
+      {
+        message_id: `local-${crypto.randomUUID()}`,
+        role: "user",
+        text,
+        status: "completed",
+      },
+    ]);
     setGenerating(true);
     setError(null);
     setQuestion("");
@@ -138,6 +155,11 @@ export function DeskKnowledgePage() {
             ))}
           </ol>
         )}
+        {generating ? (
+          <p className="text-sm font-medium text-slate-600" role="status">
+            Working on your question…
+          </p>
+        ) : null}
       </section>
 
       <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -150,11 +172,13 @@ export function DeskKnowledgePage() {
           rows={3}
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={onQuestionKeyDown}
           placeholder={EXAMPLES[0]}
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
         />
         <p className="text-xs text-slate-500">
-          Example: {EXAMPLES[1]}. Sending while a reply is still arriving stops that reply.
+          Example: {EXAMPLES[1]}. Press Enter to ask. Shift+Enter inserts a line break. Sending
+          while a reply is still arriving stops that reply.
         </p>
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
         <button

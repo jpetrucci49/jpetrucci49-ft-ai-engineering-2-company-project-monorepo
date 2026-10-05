@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 
 _PATTERNS = (
-    re.compile(r"\bpatients?\s+[A-Za-z][A-Za-z'-]+\b", re.IGNORECASE),
+    # "Patient Johnson", not "patient must" or "patient to".
+    re.compile(r"\b[Pp]atients?\s+[A-Z][a-zA-Z'-]+\b"),
     re.compile(r"\b(?:mrn|medical record(?:\s+number)?)\b[:#]?\s*\w+", re.IGNORECASE),
     re.compile(r"\bnhs\s+number\b[:#]?\s*\w*", re.IGNORECASE),
     re.compile(r"\bnhs\s*[:#]\s*\d+", re.IGNORECASE),
@@ -25,10 +26,6 @@ _QUASI_CLINIC = re.compile(
 )
 _QUASI_AGE = re.compile(r"\b(?:age\s*)?\d{1,3}\b")
 _QUASI_DX = re.compile(r"\bdiagnos", re.IGNORECASE)
-_QUASI_NAME = re.compile(
-    r"\b(?:patient|named|john|i have a patient)\b",
-    re.IGNORECASE,
-)
 
 PHI_REFUSAL = (
     "I can't remember that. HealthCore memory cannot store patient identifiers "
@@ -55,15 +52,13 @@ def redact_phi(text: str) -> tuple[str, bool]:
 
 
 def contains_quasi_identifier(text: str) -> bool:
-    """Age + diagnosis + clinic, or name/patient + age + clinic."""
+    """Age together with a diagnosis and a clinic. A policy mention of a patient is not enough."""
     blob = (text or "").strip()
     if not blob:
         return False
-    age = bool(_QUASI_AGE.search(blob))
-    clinic = bool(_QUASI_CLINIC.search(blob))
-    dx = bool(_QUASI_DX.search(blob))
-    name = bool(_QUASI_NAME.search(blob))
-    return (age and dx and clinic) or (name and age and clinic)
+    return bool(
+        _QUASI_AGE.search(blob) and _QUASI_DX.search(blob) and _QUASI_CLINIC.search(blob)
+    )
 
 
 def contains_phi_or_quasi(text: str) -> bool:
