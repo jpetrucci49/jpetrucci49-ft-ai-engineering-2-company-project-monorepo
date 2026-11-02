@@ -87,7 +87,24 @@ def _filter_rows(
         if exact:
             return exact[:LIST_CAP]
     if name_query:
-        needle = name_query.casefold()
-        named = [row for row in rows if needle in row.name.casefold()]
+        needle = name_query.casefold().strip()
+        named = [row for row in rows if _name_matches(row.name, needle)]
         return named[:LIST_CAP]
     return []
+
+
+def _name_matches(name: str, needle: str) -> bool:
+    folded = name.casefold()
+    if needle in folded:
+        return True
+    tokens = [token for token in needle.split() if token]
+    return bool(tokens) and all(_token_in_name(folded, token) for token in tokens)
+
+
+def _token_in_name(folded: str, token: str) -> bool:
+    if token in folded:
+        return True
+    # "masks" should hit "Surgical mask"; keep the full token when it already matches.
+    if len(token) > 3 and token.endswith("s") and token[:-1] in folded:
+        return True
+    return False

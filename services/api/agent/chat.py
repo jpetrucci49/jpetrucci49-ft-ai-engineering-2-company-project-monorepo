@@ -27,6 +27,7 @@ from jwt.exceptions import InvalidTokenError
 logger = logging.getLogger(__name__)
 
 AGENT_ID = "compliance_assistant"
+DESK_FAILURE = "The desk could not answer that question. Try again."
 _QUEUE_SIZE = 32
 
 _lock = threading.Lock()
@@ -215,6 +216,7 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
         )
 
     final = ""
+    failed = False
     try:
         final = produce_answer(
             question,
@@ -225,9 +227,10 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
         )
     except Exception:
         logger.exception("desk chat generation failed")
-        final = "".join(chunks)
+        failed = True
+        final = ""
 
-    if not cancel.is_set() and not chunks and final:
+    if not cancel.is_set() and not failed and not chunks and final:
         sink(final)
 
     streamed = "".join(chunks)
@@ -245,6 +248,18 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
                 "session_id": session.session_id,
                 "message_id": message_id,
                 "status": "interrupted",
+            }
+        elif failed:
+            if message is not None:
+                message.text = DESK_FAILURE
+                message.status = "failed"
+            session.status = "active"
+            frame_event = "generation_failed"
+            frame_data = {
+                "session_id": session.session_id,
+                "message_id": message_id,
+                "status": "failed",
+                "text": DESK_FAILURE,
             }
         else:
             if message is not None:
@@ -297,7 +312,7 @@ def _open_subscriber(session: ChatSession) -> tuple[queue.Queue, dict]:
 
 def _message_row(message: ChatMessage) -> dict:
     row = {"message_id": message.message_id, "role": message.role, "text": message.text}
-    if message.status in {"completed", "interrupted"}:
+    if message.status in {"completed", "interrupted", "failed"}:
         row["status"] = message.status
     return row
 

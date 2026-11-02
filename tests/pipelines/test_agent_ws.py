@@ -79,6 +79,33 @@ def test_user_message_streams_then_completes(chat_api, monkeypatch: pytest.Monke
     assert "ticket_id" not in completed["data"]
 
 
+def test_generation_failure_is_reported(chat_api, monkeypatch: pytest.MonkeyPatch) -> None:
+    client, token = chat_api
+
+    def _boom(question: str, *, user_id: int, session_id: str, sink, cancel: threading.Event) -> str:
+        del question, user_id, session_id, sink, cancel
+        raise RuntimeError("Cannot reach Qdrant")
+
+    monkeypatch.setattr("agent.chat.produce_answer", _boom)
+    with client.websocket_connect(_url("session-fail", token)) as ws:
+        ws.receive_json()
+        ws.send_json(
+            {"event": "user_message", "data": {"session_id": "session-fail", "text": "Cancellation charge?"}}
+        )
+        frames = _until(ws, "generation_failed")
+    assert all(frame["event"] != "generation_completed" for frame in frames)
+    failed = frames[-1]
+    assert failed["data"]["status"] == "failed"
+    assert failed["data"]["message_id"]
+    assert "Try again" in failed["data"]["text"]
+    assert "Qdrant" not in failed["data"]["text"]
+    with client.websocket_connect(_url("session-fail", token)) as ws:
+        history = ws.receive_json()
+    assistant = next(row for row in history["data"]["messages"] if row["role"] == "assistant")
+    assert assistant["status"] == "failed"
+    assert assistant["text"] == failed["data"]["text"]
+
+
 def test_interrupt_stops_tokens_and_starts_a_new_turn(
     chat_api, monkeypatch: pytest.MonkeyPatch
 ) -> None:

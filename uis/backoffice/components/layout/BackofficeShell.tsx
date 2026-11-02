@@ -33,8 +33,8 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
     { href: urls.tracker, label: crossAppNavLabels.talentPipeline, authenticated: true },
   ];
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-slate-900 text-white">
+    <div className="flex h-dvh flex-col overflow-hidden bg-slate-100">
+      <header className="shrink-0 border-b border-slate-200 bg-slate-900 text-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">HealthCore Digital</p>
@@ -60,7 +60,9 @@ export function BackofficeShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col overflow-y-auto px-4 py-8">
+        {children}
+      </main>
     </div>
   );
 }

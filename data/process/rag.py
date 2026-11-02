@@ -295,7 +295,7 @@ def get_qdrant_client() -> QdrantClient:
         if _memory_client is None:
             _memory_client = QdrantClient(":memory:")
         return _memory_client
-    return QdrantClient(url=url, check_compatibility=False)
+    return QdrantClient(url=url, timeout=30, check_compatibility=False)
 
 
 def _split_on_markers(body: str, markers: tuple[str, ...]) -> list[tuple[str, str]]:

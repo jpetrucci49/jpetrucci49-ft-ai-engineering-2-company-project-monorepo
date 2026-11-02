@@ -20,6 +20,7 @@ from agent.nodes import (
 )
 from agent.tools.incidents import TICKET_FALLBACK, classify_question
 from agent.tools.inventory import STOCK_FALLBACK
+from mcps.healthcore.tools.inventory import _filter_rows
 from agent.traces import infer_path, load_trace, traces_dir
 from inventory.schemas import MedicalSupplyResponse
 from app.incidents.models import (
@@ -151,12 +152,40 @@ def test_classify_turn_routes_stock() -> None:
     intent, _, inventory_query = classify_turn("Do we have stock of nitrile gloves?")
     assert intent == "inventory"
     assert inventory_query.name_query and "nitrile" in inventory_query.name_query.lower()
+    intent, _, masks = classify_turn("what is our current stock on masks?")
+    assert intent == "inventory"
+    assert masks.name_query == "masks"
     intent, _, _ = classify_turn(
         "What is the cancellation policy and do we have stock of nitrile gloves?"
     )
     assert intent == "inventory_rag"
     intent, _, _ = classify_turn("What is the status of ticket 12 and nitrile gloves?")
     assert intent == "incident"
+
+
+def test_inventory_name_query_matches_plural() -> None:
+    mask = MedicalSupplyResponse(
+        id=2,
+        name="Surgical mask (pack of 50)",
+        sku="HCR-PPE-002",
+        category="ppe",
+        unit="pack",
+        country="UK",
+        current_stock=36,
+    )
+    gloves = MedicalSupplyResponse(
+        id=1,
+        name="Nitrile gloves (box of 100)",
+        sku="HCR-PPE-001",
+        category="ppe",
+        unit="box",
+        country="US",
+        current_stock=2,
+    )
+    matched = _filter_rows([gloves, mask], sku=None, name_query="masks")
+    assert [row.sku for row in matched] == ["HCR-PPE-002"]
+    matched = _filter_rows([gloves, mask], sku=None, name_query="nitrile gloves")
+    assert [row.sku for row in matched] == ["HCR-PPE-001"]
 
 
 def test_route_predicates() -> None:
