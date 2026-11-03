@@ -52,7 +52,7 @@ Do not put `https://llm.4geeks.ai/v1` or a course key on the public server. List
 
 The demo image is the repo-root `Dockerfile` (port **7860**). It seeds `demo@healthcore.example` on every boot (`scripts/demo_boot.py`). Index the knowledge base once from a laptop against Qdrant Cloud (`uv run python scripts/index_knowledge.py`), not on every cold start. MCP is not started in that image; a stock or ticket question uses the existing "could not confirm" reply. Policy questions and guardrails do not need MCP.
 
-Vercel: import this repo with the **repository root** as the project root (the backoffice imports `packages/`, `src/`, and `tests/utils/`). `vercel.json` sets the install and build commands. `uis/backoffice/next.config.ts` sets `outputFileTracingRoot` to the repo root.
+Vercel: set the project **Root Directory** to `uis/backoffice` and turn on **Include source files outside of the Root Directory** (the app imports `packages/`, `src/`, and `tests/utils/`). Install and build stay `npm install` and `npm run build` inside that directory. `uis/backoffice/next.config.ts` sets `outputFileTracingRoot` to the repo root.
 
 HealthCore project workspace containing:
 
