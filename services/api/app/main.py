@@ -42,13 +42,16 @@ async def lifespan(_: FastAPI):
     get_jwt_secret()
     validate_password_reset_config()
     init_inventory_schema()
-    from inventory.database import _engine
-    from data.pipelines.monthly_clinic_supply_performance.db import (
-        ensure_reporting_schema,
-    )
+    # The demo image does not install Prefect. Importing the reporting package
+    # loads that dependency, so schema setup stays on local and compose only.
+    if os.getenv("HEALTHCORE_DEMO", "").strip() != "1":
+        from inventory.database import _engine
+        from data.pipelines.monthly_clinic_supply_performance.db import (
+            ensure_reporting_schema,
+        )
 
-    if _engine is not None:
-        ensure_reporting_schema()
+        if _engine is not None:
+            ensure_reporting_schema()
     yield
 
 

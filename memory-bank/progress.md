@@ -8,6 +8,7 @@ _Last updated: trimmed public-demo image and desk rate limit_
 - [x] `scripts/demo_boot.py` reseeds a non-admin demo user, suppliers, inventory, and incidents
 - [x] `QDRANT_API_KEY` is optional; local Qdrant stays keyless
 - [x] Desk query, knowledge query, and chat turns share the 10-per-minute window
+- [x] Demo startup skips the reporting schema so the image does not import Prefect
 - [ ] Live URL still a README placeholder until the host is confirmed
 
 ## Completed
