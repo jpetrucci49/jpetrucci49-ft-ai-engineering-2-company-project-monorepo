@@ -9,6 +9,7 @@ _Last updated: trimmed public-demo image and desk rate limit_
 - [x] `QDRANT_API_KEY` is optional; local Qdrant stays keyless
 - [x] Desk query, knowledge query, and chat turns share the 10-per-minute window
 - [x] Demo startup skips the reporting schema so the image does not import Prefect
+- [x] Optional chat host (`LLM_CHAT_*`) so answers can use Groq while embeddings stay on Gemini
 - [ ] Live URL still a README placeholder until the host is confirmed
 
 ## Completed

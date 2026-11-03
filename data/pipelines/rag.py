@@ -16,11 +16,11 @@ from data.process.rag import (
     COLLECTION,
     DEFAULT_MIN_SCORE,
     embed,
+    chat_api_key,
+    chat_base_url,
     chat_model_candidates,
     get_qdrant_client,
     provider_http_error,
-    rag_api_key,
-    rag_base_url,
 )
 
 from agent.harness.isolate import wrap_text
@@ -215,7 +215,7 @@ def _user_prompt(question: str, context: list[dict[str, Any]]) -> str:
 
 
 def _require_api_key() -> str:
-    key = rag_api_key()
+    key = chat_api_key()
     if not key:
         raise RuntimeError(
             "LLM_API_KEY / RAG_API_KEY / FOURGEEKS_API_KEY / OPENAI_API_KEY is required to generate answers"
@@ -231,7 +231,7 @@ def _complete_blocking(question: str, context: list[dict[str, Any]]) -> str:
     for model in chat_model_candidates():
         for attempt in range(4):
             response = httpx.post(
-                f"{rag_base_url()}/chat/completions",
+                f"{chat_base_url()}/chat/completions",
                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                 json=_chat_body(model, user, stream=False),
                 timeout=45.0,
@@ -270,7 +270,7 @@ def _complete_streaming(
                 return ""
             with client.stream(
                 "POST",
-                f"{rag_base_url()}/chat/completions",
+                f"{chat_base_url()}/chat/completions",
                 headers=headers,
                 json=_chat_body(model, user, stream=True),
             ) as response:

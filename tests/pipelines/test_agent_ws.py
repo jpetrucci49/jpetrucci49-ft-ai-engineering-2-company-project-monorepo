@@ -177,8 +177,8 @@ def test_reconnect_restores_the_interrupted_message(
 
 def test_streaming_completion_stops_when_cancelled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("data.pipelines.rag.chat_model_candidates", lambda: ["test-model"])
-    monkeypatch.setattr("data.pipelines.rag.rag_api_key", lambda: "test-key")
-    monkeypatch.setattr("data.pipelines.rag.rag_base_url", lambda: "http://llm.test/v1")
+    monkeypatch.setattr("data.pipelines.rag.chat_api_key", lambda: "test-key")
+    monkeypatch.setattr("data.pipelines.rag.chat_base_url", lambda: "http://llm.test/v1")
     cancel = threading.Event()
     seen: list[str] = []
 

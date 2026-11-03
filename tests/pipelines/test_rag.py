@@ -103,6 +103,27 @@ def test_env_value_strips_lesson_comment_quotes(monkeypatch: pytest.MonkeyPatch)
     assert rag_process.generation_model_id() == "gpt-4o-mini"
 
 
+def test_chat_host_override_keeps_embeddings_on_the_embed_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "gemini-key")
+    monkeypatch.setenv("LLM_API_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
+    monkeypatch.setenv("LLM_MODEL", "gemini-2.5-flash")
+    monkeypatch.setenv("LLM_EMBEDDING_MODEL", "gemini-embedding-2")
+    monkeypatch.setenv("LLM_CHAT_API_KEY", "groq-key")
+    monkeypatch.setenv("LLM_CHAT_API_URL", "https://api.groq.com/openai/v1")
+    monkeypatch.setenv("LLM_CHAT_MODEL", "openai/gpt-oss-120b")
+    monkeypatch.setattr(
+        rag_process,
+        "listed_model_ids",
+        lambda: ["gemini-2.5-flash", "gemini-embedding-2"],
+    )
+    assert rag_process.rag_api_key() == "gemini-key"
+    assert rag_process.rag_base_url() == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert rag_process.embedding_model_id() == "gemini-embedding-2"
+    assert rag_process.chat_api_key() == "groq-key"
+    assert rag_process.chat_base_url() == "https://api.groq.com/openai/v1"
+    assert rag_process.chat_model_candidates() == ["openai/gpt-oss-120b"]
+
+
 def test_course_llm_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_API_KEY", "sk-test")
     monkeypatch.setenv("LLM_API_URL", "https://gateway.example/v1")

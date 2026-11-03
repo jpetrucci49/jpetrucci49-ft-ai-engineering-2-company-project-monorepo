@@ -100,6 +100,28 @@ def generation_model_id() -> str:
     return _env_value("LLM_MODEL", "RAG_GENERATION_MODEL", default="gpt-4o-mini")
 
 
+def chat_generation_model_id() -> str:
+    """Chat model. ``LLM_CHAT_MODEL`` overrides ``LLM_MODEL`` without touching embeddings."""
+    return _env_value("LLM_CHAT_MODEL") or generation_model_id()
+
+
+def chat_api_key() -> str:
+    return _env_value("LLM_CHAT_API_KEY") or rag_api_key()
+
+
+def chat_base_url() -> str:
+    override = _env_value("LLM_CHAT_API_URL").rstrip("/")
+    return override or rag_base_url()
+
+
+def chat_host_overridden() -> bool:
+    return bool(
+        _env_value("LLM_CHAT_API_URL")
+        or _env_value("LLM_CHAT_API_KEY")
+        or _env_value("LLM_CHAT_MODEL")
+    )
+
+
 def listed_model_ids() -> list[str]:
     """Provider ``/models`` ids. Cached. Empty when offline or the call fails."""
     global _listed_model_ids
@@ -149,7 +171,13 @@ def resolve_model_id(configured: str, *, embedding: bool = False) -> str:
 
 
 def chat_model_candidates() -> list[str]:
-    """Configured chat model first, then other non-embedding catalog ids (OpenAI/GPT preferred)."""
+    """Configured chat model first, then other non-embedding catalog ids (OpenAI/GPT preferred).
+
+    A separate chat host is used as configured. The embedding catalog must not
+    rewrite that id onto a Gemini model name.
+    """
+    if chat_host_overridden():
+        return [chat_generation_model_id()]
     primary = resolve_model_id(generation_model_id())
     chat = [item for item in listed_model_ids() if "embed" not in item.lower()]
     preferred = [item for item in chat if "openai" in item.lower() or "gpt" in item.lower()]

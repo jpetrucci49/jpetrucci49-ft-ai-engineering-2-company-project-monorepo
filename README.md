@@ -34,8 +34,11 @@ Set these on the host. When a variable is unset, local code keeps today's localh
 | `JWT_SECRET` | new random string | required in `services/api/.env` |
 | `LLM_API_URL` | `https://generativelanguage.googleapis.com/v1beta/openai` | provider base URL |
 | `LLM_API_KEY` | your Google AI Studio key | unset / placeholder |
-| `LLM_MODEL` | id from `GET $LLM_API_URL/models` | `gpt-4o-mini` |
+| `LLM_MODEL` | unused for answers when `LLM_CHAT_MODEL` is set | `gpt-4o-mini` |
 | `LLM_EMBEDDING_MODEL` | embedding id from that same list | `text-embedding-3-small` |
+| `LLM_CHAT_API_URL` | `https://api.groq.com/openai/v1` | unset (chat uses `LLM_API_URL`) |
+| `LLM_CHAT_API_KEY` | Groq key | unset |
+| `LLM_CHAT_MODEL` | `openai/gpt-oss-120b` | unset (chat uses `LLM_MODEL`) |
 | `QDRANT_URL` | Qdrant Cloud cluster URL | `http://127.0.0.1:6333` |
 | `QDRANT_API_KEY` | Qdrant Cloud key | empty |
 | `QDRANT_COLLECTION` | `healthcore_knowledge` | `healthcore_knowledge` |
