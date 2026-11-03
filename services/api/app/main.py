@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 import sys
 
@@ -28,7 +29,6 @@ from inventory.database import init_inventory_schema
 from inventory.router import router as inventory_router
 from agent.router import router as agent_router
 from knowledge.router import router as knowledge_router
-from reporting.router import router as reporting_router
 from rfp.router import router as rfp_router
 from routes.auth import router as auth_router
 from routes.profiles import router as profiles_router
@@ -103,7 +103,10 @@ app.include_router(incident_manager_router, prefix="/api")
 app.include_router(suppliers_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
-app.include_router(reporting_router)
+if os.getenv("HEALTHCORE_DEMO", "").strip() != "1":
+    from reporting.router import router as reporting_router
+
+    app.include_router(reporting_router)
 app.include_router(knowledge_router)
 app.include_router(agent_router)
 app.include_router(rfp_router)

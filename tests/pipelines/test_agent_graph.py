@@ -562,8 +562,12 @@ def test_agent_query_rate_limit_does_not_call_the_graph(monkeypatch: pytest.Monk
         encoding="utf-8"
     )
     chat = (root / "services" / "api" / "agent" / "chat.py").read_text(encoding="utf-8")
-    assert "enforce_agent_query_limit" not in knowledge
-    assert "enforce_agent_query_limit" not in chat
+    assert knowledge.index("enforce_agent_query_limit(user.id)") < knowledge.index(
+        "answer_question("
+    )
+    enqueue = chat.index("def _enqueue_turn")
+    assert chat.index("allow_agent_query(", enqueue) < chat.index("_start_locked(", enqueue)
+    assert chat.index("_reject_turn(", enqueue) > chat.index("with session.guard:", enqueue)
 
     reset_agent_query_limits()
     clock = {"t": 1_000.0}

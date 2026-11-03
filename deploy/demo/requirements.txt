@@ -1,0 +1,22 @@
+# Runtime deps for the public demo image. Prefect and the sales-forecast stack are omitted.
+email-validator>=2.0.0
+fastapi>=0.115.0
+httpx>=0.28.0
+qdrant-client>=1.14.0
+libpass[bcrypt]>=1.9,<2
+pandas>=3.0.5
+psycopg[binary]>=3.3.4
+pyjwt>=2.8,<3
+python-multipart>=0.0.20
+resend>=2.0,<3
+sqlmodel>=0.0.39
+tinydb>=4.8.2
+uvicorn[standard]>=0.34.0
+langgraph>=1.2.12
+mcpauth>=0.2.0b1
+mcp>=1.30.0
+langchain-mcp-adapters>=0.3.2
+markitdown[pdf]>=0.1.8
+py-readability-metrics>=1.4.5
+langgraph-checkpoint-sqlite>=3.1.1
+python-dotenv>=1.0.0

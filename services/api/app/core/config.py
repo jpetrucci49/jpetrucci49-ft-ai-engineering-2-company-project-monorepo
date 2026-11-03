@@ -13,7 +13,7 @@ def get_cors_origins() -> list[str]:
         "http://127.0.0.1:3000"
     )
     configured = raw or default
-    return [origin.strip() for origin in configured.split(",") if origin.strip()]
+    return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
 
 
 def expose_api_docs() -> bool:

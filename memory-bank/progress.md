@@ -1,6 +1,14 @@
 # HealthCore Monorepo — Progress
 
-_Last updated: NIST CSF 2.0 report and urgent AI protections (12)_
+_Last updated: trimmed public-demo image and desk rate limit_
+
+## Public demo (not a full compose deploy)
+
+- [x] Repo-root `Dockerfile` for a free Docker host on port 7860; compose Dockerfiles unchanged
+- [x] `scripts/demo_boot.py` reseeds a non-admin demo user, suppliers, inventory, and incidents
+- [x] `QDRANT_API_KEY` is optional; local Qdrant stays keyless
+- [x] Desk query, knowledge query, and chat turns share the 10-per-minute window
+- [ ] Live URL still a README placeholder until the host is confirmed
 
 ## Completed
 

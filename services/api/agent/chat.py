@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from fastapi import WebSocket, WebSocketDisconnect
 
 from agent.graph import run_desk_agent
+from agent.rate_limit import RATE_LIMIT_DETAIL, allow_agent_query
 from auth.security import decode_access_token
 from auth.services import users as user_service
 from data.pipelines.rag import (
@@ -155,13 +156,19 @@ def apply_client_frame(session: ChatSession, user_id: int, raw: str) -> None:
 
 
 def _enqueue_turn(session: ChatSession, user_id: int, text: str) -> None:
+    limited = False
     with session.guard:
         if session.running:
             session.cancel.set()
             session.pending_input = text
             session.pending_user_id = user_id
             return
-        _start_locked(session, user_id, text)
+        if not allow_agent_query(user_id):
+            limited = True
+        else:
+            _start_locked(session, user_id, text)
+    if limited:
+        _reject_turn(session, text, RATE_LIMIT_DETAIL)
 
 
 def _interrupt(session: ChatSession, user_id: int, new_input: str) -> None:
@@ -171,8 +178,39 @@ def _interrupt(session: ChatSession, user_id: int, new_input: str) -> None:
             session.pending_input = new_input or None
             session.pending_user_id = user_id
             return
-        if new_input:
-            _start_locked(session, user_id, new_input)
+    if new_input:
+        _enqueue_turn(session, user_id, new_input)
+
+
+def _reject_turn(session: ChatSession, text: str, detail: str) -> None:
+    """Stop a desk turn before the model runs. ``detail`` must not include the question."""
+    assistant = ChatMessage(
+        message_id=str(uuid.uuid4()),
+        role="assistant",
+        text=detail,
+        status="failed",
+    )
+    with session.guard:
+        session.status = "active"
+        session.messages.append(
+            ChatMessage(
+                message_id=str(uuid.uuid4()),
+                role="user",
+                text=text,
+                status="completed",
+            )
+        )
+        session.messages.append(assistant)
+    _publish(
+        session,
+        "generation_failed",
+        {
+            "session_id": session.session_id,
+            "message_id": assistant.message_id,
+            "status": "failed",
+            "text": detail,
+        },
+    )
 
 
 def _start_locked(session: ChatSession, user_id: int, text: str) -> None:

@@ -31,7 +31,7 @@ The list of model inputs and the system inventory are [`README.md`](./README.md)
 
 ## Protect
 
-The four code fixes in the table above are in place.
+The four code fixes in the table above are in place. `POST /agent/query`, `POST /knowledge/query`, and each new desk-chat turn share one window: 10 requests in 60 seconds per signed-in user. The refusal text does not include the question.
 
 Logs and traces do not store question or answer text. Guardrail hits stay type, name, and `run_id`. Desk traces keep the path, intent, sources, tool ids, errors, memory outcome, and guardrail name.
 
@@ -76,7 +76,6 @@ Open gap: there is no volume snapshot of Qdrant. Risk: a poisoned or lost collec
 
 | Gap | Risk | Mitigation |
 | --- | --- | --- |
-| `WS /agent/chat` and `POST /knowledge/query` have no application rate limit. Provider HTTP 429 handling in `rag.py` is not this control. | One signed-in user can still drive those two model paths without the 10-per-minute cap. | Cap them in a later cycle with the same in-process window. `POST /agent/query` is limited now. |
 | No page when the injection count rises. | A rise in refusals is visible only on the summary. | Claire Whitfield reviews `GET /agent/guardrails/summary`. |
 | No Qdrant volume snapshot. | A bad index is not restored from disk. | `uv run python scripts/index_knowledge.py`. |
 | `MemorySaver` keeps the turn in process memory. | The question and answer exist in that process until it exits. They are not in the trace file. | Do not export the checkpointer. Traces stay action-only. |
