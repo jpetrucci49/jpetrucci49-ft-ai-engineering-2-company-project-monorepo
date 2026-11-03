@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     "@healthcore/fixtures": "tests/utils/fixtures.ts",
     "@healthcore/utility-registry": "src/utility-registry.ts",
   }),
+  outputFileTracingRoot: path.join(appRoot, "../.."),
 };
 
 export default nextConfig;

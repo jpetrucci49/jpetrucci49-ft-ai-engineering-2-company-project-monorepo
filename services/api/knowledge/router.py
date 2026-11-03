@@ -9,6 +9,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from agent.rate_limit import enforce_agent_query_limit
 from auth.dependencies import get_current_user
 from auth.models import UserPublic
 from data.pipelines.rag import query as answer_question
@@ -29,11 +30,12 @@ class KnowledgeQueryOut(BaseModel):
 @router.post("/query", response_model=KnowledgeQueryOut)
 def knowledge_query(
     body: KnowledgeQueryIn,
-    _: Annotated[UserPublic, Depends(get_current_user)],
+    user: Annotated[UserPublic, Depends(get_current_user)],
 ) -> KnowledgeQueryOut:
     question = body.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="question must not be empty")
+    enforce_agent_query_limit(user.id)
     try:
         answer = answer_question(question)
     except RuntimeError as exc:

@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from fastapi import WebSocket, WebSocketDisconnect
 
 from agent.graph import run_desk_agent
+from agent.rate_limit import RATE_LIMIT_DETAIL, allow_agent_query
 from auth.security import decode_access_token
 from auth.services import users as user_service
 from data.pipelines.rag import (
@@ -27,6 +28,7 @@ from jwt.exceptions import InvalidTokenError
 logger = logging.getLogger(__name__)
 
 AGENT_ID = "compliance_assistant"
+DESK_FAILURE = "The desk could not answer that question. Try again."
 _QUEUE_SIZE = 32
 
 _lock = threading.Lock()
@@ -154,13 +156,19 @@ def apply_client_frame(session: ChatSession, user_id: int, raw: str) -> None:
 
 
 def _enqueue_turn(session: ChatSession, user_id: int, text: str) -> None:
+    limited = False
     with session.guard:
         if session.running:
             session.cancel.set()
             session.pending_input = text
             session.pending_user_id = user_id
             return
-        _start_locked(session, user_id, text)
+        if not allow_agent_query(user_id):
+            limited = True
+        else:
+            _start_locked(session, user_id, text)
+    if limited:
+        _reject_turn(session, text, RATE_LIMIT_DETAIL)
 
 
 def _interrupt(session: ChatSession, user_id: int, new_input: str) -> None:
@@ -170,8 +178,39 @@ def _interrupt(session: ChatSession, user_id: int, new_input: str) -> None:
             session.pending_input = new_input or None
             session.pending_user_id = user_id
             return
-        if new_input:
-            _start_locked(session, user_id, new_input)
+    if new_input:
+        _enqueue_turn(session, user_id, new_input)
+
+
+def _reject_turn(session: ChatSession, text: str, detail: str) -> None:
+    """Stop a desk turn before the model runs. ``detail`` must not include the question."""
+    assistant = ChatMessage(
+        message_id=str(uuid.uuid4()),
+        role="assistant",
+        text=detail,
+        status="failed",
+    )
+    with session.guard:
+        session.status = "active"
+        session.messages.append(
+            ChatMessage(
+                message_id=str(uuid.uuid4()),
+                role="user",
+                text=text,
+                status="completed",
+            )
+        )
+        session.messages.append(assistant)
+    _publish(
+        session,
+        "generation_failed",
+        {
+            "session_id": session.session_id,
+            "message_id": assistant.message_id,
+            "status": "failed",
+            "text": detail,
+        },
+    )
 
 
 def _start_locked(session: ChatSession, user_id: int, text: str) -> None:
@@ -215,6 +254,7 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
         )
 
     final = ""
+    failed = False
     try:
         final = produce_answer(
             question,
@@ -225,9 +265,10 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
         )
     except Exception:
         logger.exception("desk chat generation failed")
-        final = "".join(chunks)
+        failed = True
+        final = ""
 
-    if not cancel.is_set() and not chunks and final:
+    if not cancel.is_set() and not failed and not chunks and final:
         sink(final)
 
     streamed = "".join(chunks)
@@ -245,6 +286,18 @@ def _generate(session: ChatSession, message_id: str, question: str, user_id: int
                 "session_id": session.session_id,
                 "message_id": message_id,
                 "status": "interrupted",
+            }
+        elif failed:
+            if message is not None:
+                message.text = DESK_FAILURE
+                message.status = "failed"
+            session.status = "active"
+            frame_event = "generation_failed"
+            frame_data = {
+                "session_id": session.session_id,
+                "message_id": message_id,
+                "status": "failed",
+                "text": DESK_FAILURE,
             }
         else:
             if message is not None:
@@ -297,7 +350,7 @@ def _open_subscriber(session: ChatSession) -> tuple[queue.Queue, dict]:
 
 def _message_row(message: ChatMessage) -> dict:
     row = {"message_id": message.message_id, "role": message.role, "text": message.text}
-    if message.status in {"completed", "interrupted"}:
+    if message.status in {"completed", "interrupted", "failed"}:
         row["status"] = message.status
     return row
 

@@ -2,7 +2,7 @@ export type DeskChatMessage = {
   message_id: string;
   role: "user" | "assistant";
   text: string;
-  status?: "completed" | "interrupted";
+  status?: "completed" | "interrupted" | "failed";
 };
 
 export type DeskChatFrame = {
@@ -13,7 +13,7 @@ export type DeskChatFrame = {
     sequence?: number;
     message_id?: string;
     text?: string;
-    status?: "completed" | "interrupted";
+    status?: "completed" | "interrupted" | "failed";
     messages?: DeskChatMessage[];
   };
 };
@@ -56,6 +56,9 @@ export function applyDeskFrame(current: DeskChatMessage[], frame: DeskChatFrame)
   if (frame.event === "generation_interrupted" && data.message_id) {
     return finishAssistant(current, data.message_id, "interrupted");
   }
+  if (frame.event === "generation_failed" && data.message_id) {
+    return finishAssistant(current, data.message_id, "failed", data.text);
+  }
   if (frame.event === "generation_completed" && data.message_id) {
     return finishAssistant(current, data.message_id, "completed", data.text);
   }
@@ -65,7 +68,12 @@ export function applyDeskFrame(current: DeskChatMessage[], frame: DeskChatFrame)
 function openAssistantIndex(current: DeskChatMessage[]): number {
   for (let index = current.length - 1; index >= 0; index -= 1) {
     const message = current[index];
-    if (message.role === "assistant" && message.status !== "completed" && message.status !== "interrupted") {
+    if (
+      message.role === "assistant" &&
+      message.status !== "completed" &&
+      message.status !== "interrupted" &&
+      message.status !== "failed"
+    ) {
       return index;
     }
   }
@@ -75,12 +83,23 @@ function openAssistantIndex(current: DeskChatMessage[]): number {
 function finishAssistant(
   current: DeskChatMessage[],
   messageId: string,
-  status: "completed" | "interrupted",
+  status: "completed" | "interrupted" | "failed",
   text?: string
 ): DeskChatMessage[] {
   const exact = current.findIndex((message) => message.message_id === messageId);
   const target = exact >= 0 ? exact : openAssistantIndex(current);
-  if (target < 0) return current;
+  if (target < 0) {
+    if (status !== "failed") return current;
+    return [
+      ...current,
+      {
+        message_id: messageId,
+        role: "assistant",
+        text: typeof text === "string" ? text : "",
+        status,
+      },
+    ];
+  }
   return current.map((message, index) =>
     index === target
       ? {

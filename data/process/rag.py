@@ -295,7 +295,11 @@ def get_qdrant_client() -> QdrantClient:
         if _memory_client is None:
             _memory_client = QdrantClient(":memory:")
         return _memory_client
-    return QdrantClient(url=url, check_compatibility=False)
+    api_key = os.environ.get("QDRANT_API_KEY", "").strip()
+    kwargs: dict = {"url": url, "timeout": 30, "check_compatibility": False}
+    if api_key:
+        kwargs["api_key"] = api_key
+    return QdrantClient(**kwargs)
 
 
 def _split_on_markers(body: str, markers: tuple[str, ...]) -> list[tuple[str, str]]:

@@ -61,6 +61,9 @@ def validate_password_reset_config() -> None:
     """Fail fast when password-reset env is incomplete (skipped in test mode)."""
     if _is_test_environment():
         return
+    # Public demo has no Resend account. Local and compose still require the email env.
+    if os.getenv("HEALTHCORE_DEMO", "").strip() == "1":
+        return
 
     get_password_reset_url()
     get_reset_token_expire_minutes()
